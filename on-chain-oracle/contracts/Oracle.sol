@@ -1,11 +1,15 @@
 pragma solidity >=0.4.21 <0.6.0;
 
+import "./Randomizer.sol";
+
 contract Oracle {
+  Randomizer public randomizer;
   Request[] requests; //list of requests made to the contract
   uint currentId = 0; //increasing request id
   uint minQuorum = 2; //minimum number of responses to receive before declaring final result
   uint totalOracleCount = 3; // Hardcoded oracle count
   mapping(address => Reputation) oracles;
+  address[] oracleAddresses;
 
   // defines a general api request
   struct Request {
@@ -49,12 +53,13 @@ contract Oracle {
   function newOracle () public
   {
     address sender = msg.sender;
-    if (bytes(oracles[sender].addr).length != 0) {
+    if (oracles[sender].addr != address(0)) {
       oracles[sender].addr = sender;
       oracles[sender].totalAssignedRequest = 0;
       oracles[sender].totalCompletedRequest = 0;
       oracles[sender].totalAcceptedRequest = 0;
       oracles[sender].amountPenalty = 0;
+      oracleAddresses.push(sender);
     }
   }
 
@@ -66,6 +71,8 @@ contract Oracle {
   {
     uint length = requests.push(Request(currentId, _urlToQuery, _attributeToFetch, ""));
     Request storage r = requests[length-1];
+
+    uint oracleCount = oracleAddresses.length;
 
     // Hardcoded oracles address
     r.quorum[address(0x6c2339b46F41a06f09CA0051ddAD54D1e582bA77)] = 1;
