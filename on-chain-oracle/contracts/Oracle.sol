@@ -5,6 +5,7 @@ contract Oracle {
   uint currentId = 0; //increasing request id
   uint minQuorum = 2; //minimum number of responses to receive before declaring final result
   uint totalOracleCount = 3; // Hardcoded oracle count
+  mapping(address => Reputation) oracles;
 
   // defines a general api request
   struct Request {
@@ -14,6 +15,14 @@ contract Oracle {
     string agreedValue;                 //value from key
     mapping(uint => string) anwers;     //answers provided by the oracles
     mapping(address => uint) quorum;    //oracles which will query the answer (1=oracle hasn't voted, 2=oracle has voted)
+  }
+
+  struct Reputation {
+    address addr;
+    uint totalAssignedRequest;        //total number of past requests that an oracle has agreed to, both fulfilled and unfulfileed
+    uint totalCompletedRequest;       //total number of past requests that an oracle has fulfileed
+    uint totalAcceptedRequest;        //total number of requests that have been accepted
+    uint amountPenalty;               //amount of penalty payments
   }
 
   //event that triggers oracle outside of the blockchain
@@ -30,6 +39,24 @@ contract Oracle {
     string attributeToFetch,
     string agreedValue
   );
+
+  function getReputationStatus () public returns (uint totalAssignedRequest, uint totalCompletedRequest, uint totalAcceptedRequest, uint amountPenalty)
+  {
+    Reputation storage datum = oracles[msg.sender];
+    return (datum.totalAssignedRequest, datum.totalCompletedRequest, datum.totalAcceptedRequest, datum.amountPenalty);
+  }
+
+  function newOracle () public
+  {
+    address sender = msg.sender;
+    if (bytes(oracles[sender].addr).length != 0) {
+      oracles[sender].addr = sender;
+      oracles[sender].totalAssignedRequest = 0;
+      oracles[sender].totalCompletedRequest = 0;
+      oracles[sender].totalAcceptedRequest = 0;
+      oracles[sender].amountPenalty = 0;
+    }
+  }
 
   function createRequest (
     string memory _urlToQuery,
