@@ -1,15 +1,17 @@
 pragma solidity >=0.4.21 <0.6.0;
 
-import "./Randomizer.sol";
+import "./Selection.sol";
 
 contract Oracle {
-  Randomizer public randomizer;
+  Selection public selection;
+
   Request[] requests; //list of requests made to the contract
   uint currentId = 0; //increasing request id
   uint minQuorum = 2; //minimum number of responses to receive before declaring final result
   uint totalOracleCount = 3; // Hardcoded oracle count
   mapping(address => Reputation) oracles;
   address[] oracleAddresses;
+  address administrator = address(0xafec828FF5BD140FfB42a251AD7435155E7b29bd);
 
   // defines a general api request
   struct Request {
@@ -44,7 +46,7 @@ contract Oracle {
     string agreedValue
   );
 
-  function getReputationStatus () public returns (uint totalAssignedRequest, uint totalCompletedRequest, uint totalAcceptedRequest, uint amountPenalty)
+  function getReputationStatus () public view returns (uint totalAssignedRequest, uint totalCompletedRequest, uint totalAcceptedRequest, uint amountPenalty)
   {
     Reputation storage datum = oracles[msg.sender];
     return (datum.totalAssignedRequest, datum.totalCompletedRequest, datum.totalAcceptedRequest, datum.amountPenalty);
@@ -52,6 +54,9 @@ contract Oracle {
 
   function newOracle () public
   {
+    uint oracleCount = oracleAddresses.length;
+    require(oracleCount < totalOracleCount, "The maximum limit of Oracles is exceeded.");
+
     address sender = msg.sender;
     if (oracles[sender].addr != address(0)) {
       oracles[sender].addr = sender;
@@ -60,6 +65,24 @@ contract Oracle {
       oracles[sender].totalAcceptedRequest = 0;
       oracles[sender].amountPenalty = 0;
       oracleAddresses.push(sender);
+    }
+  }
+
+  function removeOracle (address addr) public
+  {
+    require(msg.sender == administrator, "You have to be an administrator.");
+    uint i = 0;
+    uint oracleCount = oracleAddresses.length;
+
+    for (; i < oracleCount ; i ++) {
+      if (oracleAddresses[i] == addr) {
+        oracleAddresses[i] = oracleAddresses[oracleCount - 1];
+        delete oracleAddresses[oracleCount - 1];
+        oracleAddresses.length --;
+
+        oracles[addr].addr = address(0);      // Reset reputation of oracle to zero
+        break;
+      }
     }
   }
 
@@ -74,10 +97,12 @@ contract Oracle {
 
     uint oracleCount = oracleAddresses.length;
 
-    // Hardcoded oracles address
-    r.quorum[address(0x6c2339b46F41a06f09CA0051ddAD54D1e582bA77)] = 1;
-    r.quorum[address(0xb5346CF224c02186606e5f89EACC21eC25398077)] = 1;
-    r.quorum[address(0xa2997F1CA363D11a0a35bB1Ac0Ff7849bc13e914)] = 1;
+    uint[] memory selectedOracles = selection.getSelectedOracles(oracleCount, (oracleCount * 2) / 3);
+    uint i = 0;
+
+    for (; i < selectedOracles.length ; i ++) {
+      r.quorum[oracleAddresses[selectedOracles[i]]] = 1;
+    }
 
     // launch an event to be detected by oracle outside of blockchain
     emit NewRequest (
@@ -97,6 +122,7 @@ contract Oracle {
   ) public {
 
     Request storage currRequest = requests[_id];
+    uint oracleCount = oracleAddresses.length;
 
     //check if oracle is in the list of trusted oracles
     //and if the oracle hasn't voted yet
@@ -121,7 +147,7 @@ contract Oracle {
 
       //iterate through oracle list and check if enough oracles(minimum quorum)
       //have voted the same answer has the current one
-      for(uint i = 0; i < totalOracleCount; i++){
+      for(uint i = 0; i < oracleCount; i++){
         bytes memory a = bytes(currRequest.anwers[i]);
         bytes memory b = bytes(_valueRetrieved);
 
