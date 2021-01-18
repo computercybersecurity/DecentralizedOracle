@@ -7,7 +7,6 @@ contract Oracle {
 
   Request[] requests; //list of requests made to the contract
   uint currentId = 0; //increasing request id
-  uint minQuorum = 2; //minimum number of responses to receive before declaring final result
   uint totalOracleCount = 3; // Hardcoded oracle count
   mapping(address => Reputation) oracles;
   address[] oracleAddresses;
@@ -21,6 +20,7 @@ contract Oracle {
     string agreedValue;                 //value from key
     mapping(uint => string) anwers;     //answers provided by the oracles
     mapping(address => uint) quorum;    //oracles which will query the answer (1=oracle hasn't voted, 2=oracle has voted)
+    uint minQuorum;                     //minimum number of responses to receive before declaring final result
   }
 
   struct Reputation {
@@ -103,6 +103,7 @@ contract Oracle {
     for (; i < selectedOracles.length ; i ++) {
       r.quorum[oracleAddresses[selectedOracles[i]]] = 1;
     }
+    r.minQuorum = selectedOracles * 2 / 3;          //minimum number of responses to receive before declaring final result(2/3 of total)
 
     // launch an event to be detected by oracle outside of blockchain
     emit NewRequest (
@@ -153,7 +154,7 @@ contract Oracle {
 
         if(keccak256(a) == keccak256(b)){
           currentQuorum++;
-          if(currentQuorum >= minQuorum){
+          if(currentQuorum >= currRequest.minQuorum){
             currRequest.agreedValue = _valueRetrieved;
             emit UpdatedRequest (
               currRequest.id,
