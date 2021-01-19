@@ -28,7 +28,8 @@ contract Oracle {
     uint totalAssignedRequest;        //total number of past requests that an oracle has agreed to, both fulfilled and unfulfileed
     uint totalCompletedRequest;       //total number of past requests that an oracle has fulfileed
     uint totalAcceptedRequest;        //total number of requests that have been accepted
-    uint amountPenalty;               //amount of penalty payments
+    uint totalResponseTime;           //total seconds of response time
+    uint lastActiveTime;              //last active time of the oracle as second
   }
 
   //event that triggers oracle outside of the blockchain
@@ -46,31 +47,31 @@ contract Oracle {
     string agreedValue
   );
 
-  function getReputationStatus () public view returns (uint totalAssignedRequest, uint totalCompletedRequest, uint totalAcceptedRequest, uint amountPenalty)
+  function getReputationStatus () public view returns (uint, uint, uint, uint)
   {
     Reputation storage datum = oracles[msg.sender];
-    return (datum.totalAssignedRequest, datum.totalCompletedRequest, datum.totalAcceptedRequest, datum.amountPenalty);
+    return (datum.totalAssignedRequest, datum.totalCompletedRequest, datum.totalAcceptedRequest, datum.totalResponseTime);
   }
 
   function newOracle () public
   {
     uint oracleCount = oracleAddresses.length;
     require(oracleCount < totalOracleCount, "The maximum limit of Oracles is exceeded.");
+    require(oracles[sender].addr == address(0), "The oracle is already existed.");
 
     address sender = msg.sender;
-    if (oracles[sender].addr != address(0)) {
-      oracles[sender].addr = sender;
-      oracles[sender].totalAssignedRequest = 0;
-      oracles[sender].totalCompletedRequest = 0;
-      oracles[sender].totalAcceptedRequest = 0;
-      oracles[sender].amountPenalty = 0;
-      oracleAddresses.push(sender);
-    }
+    oracles[sender].addr = sender;
+    oracles[sender].totalAssignedRequest = 0;
+    oracles[sender].totalCompletedRequest = 0;
+    oracles[sender].totalAcceptedRequest = 0;
+    oracles[sender].totalResponseTime = 0;
+    oracles[sender].lastActiveTime = block.timestamp;
+    oracleAddresses.push(sender);
   }
 
-  function removeOracle (address addr) public
+  function removeOracle (address addr) internal
   {
-    require(msg.sender == administrator, "You have to be an administrator.");
+    // require(msg.sender == administrator, "You have to be an administrator.");
     uint i = 0;
     uint oracleCount = oracleAddresses.length;
 
@@ -165,6 +166,9 @@ contract Oracle {
           }
         }
       }
+    }
+    else {
+      //update last active time
     }
   }
 }
