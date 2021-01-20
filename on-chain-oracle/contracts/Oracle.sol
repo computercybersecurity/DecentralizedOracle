@@ -6,11 +6,14 @@ contract Oracle {
   Selection public selection;
 
   Request[] requests; //list of requests made to the contract
-  uint currentId = 0; //increasing request id
+  uint currentId = 1; //increasing request id
   uint totalOracleCount = 3; // Hardcoded oracle count
   mapping(address => Reputation) oracles;
   address[] oracleAddresses;
   address administrator = address(0xafec828FF5BD140FfB42a251AD7435155E7b29bd);
+  uint maxResolvedCount = 1000;
+  uint[] resolvedRequest = new uint[](maxResolvedCount);
+  uint cursorResolvedRequest = 0;
 
   // defines a general api request
   struct Request {
@@ -18,9 +21,10 @@ contract Oracle {
     string urlToQuery;                  //API url
     string attributeToFetch;            //json attribute (key) to retrieve in the response
     string agreedValue;                 //value from key
-    mapping(uint => string) anwers;     //answers provided by the oracles
-    mapping(address => uint) quorum;    //oracles which will query the answer (1=oracle hasn't voted, 2=oracle has voted)
+    uint timestamp;                     //Request Timestamp
     uint minQuorum;                     //minimum number of responses to receive before declaring final result
+    mapping(address => string) anwers;     //answers provided by the oracles
+    mapping(address => uint) quorum;    //oracles which will query the answer (1=oracle hasn't voted, 2=oracle has voted)
   }
 
   struct Reputation {
@@ -30,6 +34,7 @@ contract Oracle {
     uint totalAcceptedRequest;        //total number of requests that have been accepted
     uint totalResponseTime;           //total seconds of response time
     uint lastActiveTime;              //last active time of the oracle as second
+    uint score;                       //reputation score
   }
 
   //event that triggers oracle outside of the blockchain
@@ -47,6 +52,14 @@ contract Oracle {
     string agreedValue
   );
 
+  event DeletedRequest (
+    uint id
+  );
+
+  constructor() internal {
+    requests.push(Request(0, "", "", "", 0, 0));
+  }
+
   function getReputationStatus () public view returns (uint, uint, uint, uint)
   {
     Reputation storage datum = oracles[msg.sender];
@@ -56,16 +69,17 @@ contract Oracle {
   function newOracle () public
   {
     uint oracleCount = oracleAddresses.length;
+    address sender = msg.sender;
     require(oracleCount < totalOracleCount, "The maximum limit of Oracles is exceeded.");
     require(oracles[sender].addr == address(0), "The oracle is already existed.");
 
-    address sender = msg.sender;
     oracles[sender].addr = sender;
     oracles[sender].totalAssignedRequest = 0;
     oracles[sender].totalCompletedRequest = 0;
     oracles[sender].totalAcceptedRequest = 0;
     oracles[sender].totalResponseTime = 0;
     oracles[sender].lastActiveTime = block.timestamp;
+    oracles[sender].score = 1;
     oracleAddresses.push(sender);
   }
 
@@ -93,18 +107,22 @@ contract Oracle {
   )
   public
   {
-    uint length = requests.push(Request(currentId, _urlToQuery, _attributeToFetch, ""));
+    uint length = requests.push(Request(currentId, _urlToQuery, _attributeToFetch, "", block.timestamp, 0));
     Request storage r = requests[length-1];
 
     uint oracleCount = oracleAddresses.length;
 
     uint[] memory selectedOracles = selection.getSelectedOracles(oracleCount, (oracleCount * 2) / 3);
     uint i = 0;
+    uint scoreSum = 0;
 
     for (; i < selectedOracles.length ; i ++) {
-      r.quorum[oracleAddresses[selectedOracles[i]]] = 1;
+      address selectedOracle = oracleAddresses[selectedOracles[i]];
+      r.quorum[selectedOracle] = 1;
+      scoreSum += oracles[selectedOracle].score;
+      oracles[selectedOracle].totalAssignedRequest ++;
     }
-    r.minQuorum = selectedOracles * 2 / 3;          //minimum number of responses to receive before declaring final result(2/3 of total)
+    r.minQuorum = scoreSum * 2 / 3;          //minimum number of responses to receive before declaring final result(2/3 of total)
 
     // launch an event to be detected by oracle outside of blockchain
     emit NewRequest (
@@ -117,11 +135,24 @@ contract Oracle {
     currentId++;
   }
 
+  //delete peding request
+  function deleteRequest (uint _id) public {
+    delete requests[_id];
+    emit DeletedRequest(_id);
+  }
+
   //called by the oracle to record its answer
   function updateRequest (
     uint _id,
     string memory _valueRetrieved
   ) public {
+
+    for (uint i = 0 ; i < maxResolvedCount ; i ++) {
+      require(resolvedRequest[i] != _id, "This request is already resolved.");
+    }
+
+    //update last active time
+    oracles[address(msg.sender)].lastActiveTime = block.timestamp;
 
     Request storage currRequest = requests[_id];
     uint oracleCount = oracleAddresses.length;
@@ -130,45 +161,51 @@ contract Oracle {
     //and if the oracle hasn't voted yet
     if(currRequest.quorum[address(msg.sender)] == 1){
 
+      oracles[address(msg.sender)].totalCompletedRequest ++;
+
       //marking that this address has voted
       currRequest.quorum[msg.sender] = 2;
 
-      //iterate through "array" of answers until a position if free and save the retrieved value
-      uint tmpI = 0;
-      bool found = false;
-      while(!found) {
-        //find first empty slot
-        if(bytes(currRequest.anwers[tmpI]).length == 0){
-          found = true;
-          currRequest.anwers[tmpI] = _valueRetrieved;
-        }
-        tmpI++;
-      }
+      //save the retrieved value
+      currRequest.anwers[address(msg.sender)] = _valueRetrieved;
 
       uint currentQuorum = 0;
 
       //iterate through oracle list and check if enough oracles(minimum quorum)
       //have voted the same answer has the current one
       for(uint i = 0; i < oracleCount; i++){
-        bytes memory a = bytes(currRequest.anwers[i]);
+        bytes memory a = bytes(currRequest.anwers[oracleAddresses[i]]);
         bytes memory b = bytes(_valueRetrieved);
 
         if(keccak256(a) == keccak256(b)){
-          currentQuorum++;
-          if(currentQuorum >= currRequest.minQuorum){
-            currRequest.agreedValue = _valueRetrieved;
-            emit UpdatedRequest (
-              currRequest.id,
-              currRequest.urlToQuery,
-              currRequest.attributeToFetch,
-              currRequest.agreedValue
-            );
-          }
+          currentQuorum += oracles[oracleAddresses[i]].score;
         }
       }
-    }
-    else {
-      //update last active time
+
+      //request Resolved
+      if(currentQuorum >= currRequest.minQuorum){
+
+        resolvedRequest[cursorResolvedRequest] = currRequest.id;
+        cursorResolvedRequest = (cursorResolvedRequest + 1) % maxResolvedCount;
+
+        for(uint i = 0; i < oracleCount; i++){
+          bytes memory a = bytes(currRequest.anwers[oracleAddresses[i]]);
+          bytes memory b = bytes(_valueRetrieved);
+
+          if(keccak256(a) == keccak256(b)){
+            oracles[oracleAddresses[i]].totalAcceptedRequest ++;
+          }
+        }
+
+        currRequest.agreedValue = _valueRetrieved;
+        emit UpdatedRequest (
+          currRequest.id,
+          currRequest.urlToQuery,
+          currRequest.attributeToFetch,
+          currRequest.agreedValue
+        );
+      }
+
     }
   }
 }

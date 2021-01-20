@@ -12,9 +12,9 @@
   "author": "Adam Gall",
   "license": "ISC",
   "dependencies": {
+    "@truffle/hdwallet-provider": "^1.2.1",
     "dotenv": "^5.0.1",
     "ganache-cli": "^6.1.2",
-    "truffle": "^4.1.11",
-    "truffle-hdwallet-provider": "^0.0.5"
+    "truffle": "^5.1.62"
   }
 }

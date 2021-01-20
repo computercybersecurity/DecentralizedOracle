@@ -30,7 +30,7 @@ contract Selection {
             quickSort(arr, i, right);
     }
 
-    function getSelectedOracles(uint n, uint m) external view returns (uint[]) {
+    function getSelectedOracles(uint n, uint m) external view returns (uint[] memory) {
         Pair[] memory data;
         uint[] memory res;
         uint i = 0;
