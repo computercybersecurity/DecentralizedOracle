@@ -74,7 +74,7 @@
   "sourceMap": "36:501:0:-;;;196:53;8:9:-1;5:2;;;30:1;27;20:12;5:2;196:53:0;233:10;225:5;;:18;;;;;;;;;;;;;;;;;;36:501;;;;;;",
   "deployedSourceMap": "36:501:0:-;;;;8:9:-1;5:2;;;30:1;27;20:12;5:2;36:501:0;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;366:168;;;;;;13:2:-1;8:3;5:11;2:2;;;29:1;26;19:12;2:2;366:168:0;;;;;;;;;;;;;;;;;;;:::i;:::-;;86:36;;;:::i;:::-;;;;;;;;;;;;;;;;;;;61:20;;;:::i;:::-;;;;;;;;;;;;;;;;;;;;;;;255:105;;;;;;13:2:-1;8:3;5:11;2:2;;;29:1;26;19:12;2:2;255:105:0;;;;;;;;;;;;;;;;;:::i;:::-;;366:168;176:5;;;;;;;;;;;162:19;;:10;:19;;;158:26;;;429:19;462:11;429:45;;481:8;:21;;;503:24;;481:47;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;8:9:-1;5:2;;;30:1;27;20:12;5:2;481:47:0;;;;8:9:-1;5:2;;;45:16;42:1;39;24:38;77:16;74:1;67:27;5:2;481:47:0;;;;183:1;158:26;366:168;:::o;86:36::-;;;;:::o;61:20::-;;;;;;;;;;;;;:::o;255:105::-;176:5;;;;;;;;;;;162:19;;:10;:19;;;158:26;;;345:9;318:24;:36;;;;158:26;255:105;:::o",
   "source": "pragma solidity >=0.4.21 <0.6.0;\r\n\r\ncontract Migrations {\r\n  address public owner;\r\n  uint public last_completed_migration;\r\n\r\n  modifier restricted() {\r\n    if (msg.sender == owner) _;\r\n  }\r\n\r\n  constructor () public {\r\n    owner = msg.sender;\r\n  }\r\n\r\n  function setCompleted(uint completed) public restricted {\r\n    last_completed_migration = completed;\r\n  }\r\n\r\n  function upgrade(address new_address) public restricted {\r\n    Migrations upgraded = Migrations(new_address);\r\n    upgraded.setCompleted(last_completed_migration);\r\n  }\r\n}\r\n",
-  "sourcePath": "F:\\my-current-project\\20210106_Debase\\DecentralizedOracle\\on-chain-oracle\\contracts\\Migrations.sol",
+  "sourcePath": "F:/my-current-project/20210106_Debase/DecentralizedOracle/on-chain-oracle/contracts/Migrations.sol",
   "ast": {
     "absolutePath": "/F/my-current-project/20210106_Debase/DecentralizedOracle/on-chain-oracle/contracts/Migrations.sol",
     "exportedSymbols": {
@@ -191,7 +191,7 @@
                         "name": "msg",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 1179,
+                        "referencedDeclaration": 1193,
                         "src": "162:3:0",
                         "typeDescriptions": {
                           "typeIdentifier": "t_magic_message",
@@ -295,7 +295,7 @@
                         "name": "msg",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 1179,
+                        "referencedDeclaration": 1193,
                         "src": "233:3:0",
                         "typeDescriptions": {
                           "typeIdentifier": "t_magic_message",
@@ -879,7 +879,7 @@
                                   "overloadedDeclarations": [
                                     null
                                   ],
-                                  "referencedDeclaration": 1179,
+                                  "referencedDeclaration": 1193,
                                   "type": "msg",
                                   "value": "msg"
                                 },
@@ -1016,7 +1016,7 @@
                                   "overloadedDeclarations": [
                                     null
                                   ],
-                                  "referencedDeclaration": 1179,
+                                  "referencedDeclaration": 1193,
                                   "type": "msg",
                                   "value": "msg"
                                 },
@@ -1498,7 +1498,7 @@
     }
   },
   "schemaVersion": "3.3.3",
-  "updatedAt": "2021-01-20T06:45:36.662Z",
+  "updatedAt": "2021-01-20T07:41:54.804Z",
   "devdoc": {
     "methods": {}
   },
