@@ -76,13 +76,12 @@ contract Oracle {
     oracleAddresses.push(sender);
   }
 
-  function removeOracle (address addr) internal
+  function removeOracleByAddress (address addr) internal
   {
     // require(msg.sender == administrator, "You have to be an administrator.");
-    uint256 i = 0;
     uint256 oracleCount = oracleAddresses.length;
 
-    for (; i < oracleCount ; i ++) {
+    for (uint256 i = 0; i < oracleCount ; i ++) {
       if (oracleAddresses[i] == addr) {
         oracleAddresses[i] = oracleAddresses[oracleCount - 1];
         delete oracleAddresses[oracleCount - 1];
@@ -103,12 +102,28 @@ contract Oracle {
     uint256 length = requests.push(Request(currentId, _urlToQuery, _attributeToFetch, "", block.timestamp, 0));
     Request storage r = requests[length-1];
 
-    uint256 oracleCount = oracleAddresses.length;
+    //Validate all oracles' acitivity
+    uint i = 0;
+    while (i < oracleAddresses.length) {
+      address cursorAddress = oracleAddresses[i];
+      if (Reputation.activityValidate(oracles[cursorAddress]) == 0) {
+        
+        //Remove invalide oracle
+        oracleAddresses[i] = oracleAddresses[oracleAddresses.length - 1];
+        delete oracleAddresses[oracleAddresses.length - 1];
+        oracleAddresses.length --;
 
+        oracles[cursorAddress].addr = address(0);      // Reset reputation of oracle to zero
+        i --;
+      }
+      i ++;
+    }
+
+    uint256 oracleCount = oracleAddresses.length;
     uint256[] memory selectedOracles = Selection.getSelectedOracles(oracleCount, oracleCount.mul(2).div(3));
     uint256 scoreSum = 0;
 
-    for (uint256 i = 0; i < selectedOracles.length ; i ++) {
+    for (i = 0; i < selectedOracles.length ; i ++) {
       address selectedOracle = oracleAddresses[selectedOracles[i]];
       r.quorum[selectedOracle] = 1;
       scoreSum = scoreSum.add(oracles[selectedOracle].score);

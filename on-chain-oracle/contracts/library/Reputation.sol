@@ -8,7 +8,6 @@ import "./SafeMath.sol";
 
 library Reputation {
     using SafeMath for uint256;
-
     struct reputation {
         address addr;
         uint256 totalAssignedRequest;        //total number of past requests that an oracle has agreed to, both fulfilled and unfulfileed
@@ -27,5 +26,10 @@ library Reputation {
         }
         uint256 res = (x.mul(b) * 9).div(1600) + 1;
         return res;
+    }
+
+    function activityValidate(reputation memory self) internal view returns (uint256) {
+        uint256 ACTIVE_EXPIRY_TIME = 1 days;
+        return block.timestamp.sub(self.lastActiveTime) < ACTIVE_EXPIRY_TIME ? 1 : 0;
     }
 }
