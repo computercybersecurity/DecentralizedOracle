@@ -1,7 +1,7 @@
 {
-  "name": "off-chain-oracle",
+  "name": "DEOR-OFF-CHAIN",
   "version": "0.1.0",
-  "description": "oracle service for getting data from an API and relaying it to a smart contract",
+  "description": "DEOR oracle service for getting data from an API and relaying it to a smart contract",
   "main": "lib/index.js",
   "scripts": {
     "develop": "nodemon --exec babel-node src",
@@ -10,8 +10,8 @@
     "start": "node lib",
     "lint": "eslint src"
   },
-  "repository": "https://github.com/decentorganization/weather-oracle",
-  "author": "Adam Gall <adam@decentcrypto.com>",
+  "repository": "https://github.com/computercybersecurity/DecentralizedOracle",
+  "author": "Peter Park <peter.park13ak@gmail.com>",
   "license": "MIT",
   "private": false,
   "devDependencies": {
@@ -24,9 +24,7 @@
   },
   "dependencies": {
     "dotenv": "^5.0.1",
-    "request": "^2.87.0",
-    "request-promise-native": "^1.0.5",
     "truffle-hdwallet-provider": "^0.0.5",
-    "web3": "^0.20.6"
+    "web3": "^1.3.2"
   }
 }

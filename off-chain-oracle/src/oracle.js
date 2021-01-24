@@ -1,7 +1,5 @@
 require("dotenv").config();
 
-import request from "request-promise-native";
-
 import {
   updateRequest,
   newRequest
@@ -9,34 +7,34 @@ import {
 
 const start = () => {
 
-  newRequest((error, result) => {
-
-    let options = {
-      uri: result.args.urlToQuery,
-      json: true
-    };
-
-    request(options)
-      .then(parseData(result))
-      .then(updateRequest)
-      .catch(error);
-  });
-};
-
-const parseData = result => (body) => {
-  return new Promise((resolve, reject) => {
-    let id, valueRetrieved;
+  newRequest(async (error, result) => {
     try {
-      id = result.args.id;
-      valueRetrieved = (body[result.args.attributeToFetch] || 0).toString();
-    } catch (error) {
-      reject(error);
-      return;
+      const { id, urlToQuery, requestMethod, requestBody, attributeToFetch } = result.args;
+
+      const rawResponse = await fetch(urlToQuery, {
+        method: requestMethod,
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: requestBody
+      })
+
+      let valueRetrieved = await rawResponse.json();
+      const params = attributeToFetch.split(".");
+
+      params.forEach((param) => {
+        valueRetrieved = valueRetrieved[param];
+      })
+
+      updateRequest({
+        id, 
+        valueRetrieved: (valueRetrieved || 0).toString()
+      });
     }
-    resolve({
-      id,
-      valueRetrieved
-    });
+    catch(error) {
+      console.log(error);
+    }
   });
 };
 
