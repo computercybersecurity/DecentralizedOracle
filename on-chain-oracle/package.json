@@ -1,7 +1,7 @@
 {
-  "name": "weather-oracle",
+  "name": "DEOR-ON-CHAIN",
   "version": "1.0.0",
-  "description": "Weather Oracle Auditer",
+  "description": "DEOR Oracle Auditer",
   "main": "truffle.js",
   "directories": {
     "test": "test"
@@ -9,8 +9,9 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "Adam Gall",
-  "license": "ISC",
+  "repository": "https://github.com/computercybersecurity/DecentralizedOracle",
+  "author": "Peter Park <peter.park13ak@gmail.com>",
+  "license": "MIT",
   "dependencies": {
     "@truffle/hdwallet-provider": "^1.2.1",
     "dotenv": "^5.0.1",

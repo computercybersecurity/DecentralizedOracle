@@ -18,7 +18,10 @@ module.exports = {
           process.env.WEB3_PROVIDER_ADDRESS
         )
       },
-      network_id: 42
+      network_id: 42,
+      gas: 4712388,
+      gasPrice: 25000000000,
+      confirmations: 2
     }
   }
 };

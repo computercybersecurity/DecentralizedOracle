@@ -20,3 +20,10 @@ $ yarn run truffle migrate
 ```
 
 which will deploy the contract onto your local ethereum blockchain.
+
+
+
+````
+$ yarn run truffle migrate --network kovan
+````
+which will deploy the contract onto kovan ethereum blockchain.
