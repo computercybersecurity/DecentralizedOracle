@@ -1,15 +1,15 @@
-pragma solidity >=0.4.21 <0.6.0;
+// pragma solidity >=0.4.21 <0.6.0;
+pragma solidity >=0.6.6;
 
 interface IDEOR {
-    //event that triggers oracle outside of the blockchain
-    event NewRequest(uint256 id, string urlToQuery, string requestMethod, string requestBody, string attributeToFetch);
-    //triggered when there's a consensus on the final result
-    event UpdatedRequest(uint256 id, string urlToQuery, string requestMethod, string requestBody, string attributeToFetch, string agreedValue);
-    event DeletedRequest(uint256 id);
+    function balanceOf(address _owner) external view returns (uint256);
+    function transfer(address _to, uint256 _value) external returns (bool);
+    function transferFrom(address _from, address _to, uint256 _value) external returns (bool);
+    function approve(address _spender, uint256 _value) external returns (bool);
+    function allowance(address _owner, address _spender) external view returns (uint256);
 
-    function getReputationStatus() external view returns (uint256, uint256, uint256, uint256);
-    function newOracle() external;
-    function createRequest(string calldata _urlToQuery, string calldata _requestMethod, string calldata _requestBody, string calldata _attributeToFetch) external;
-    function deleteRequest(uint256 _id) external;
-    function updateRequest(uint256 _id, string calldata _valueRetrieved) external;
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+    event Mint(address indexed to, uint256 amount);
+    event MintFinished();
 }

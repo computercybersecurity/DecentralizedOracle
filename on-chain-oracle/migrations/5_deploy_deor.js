@@ -1,7 +1,7 @@
 var SafeMathDEOR = artifacts.require("../contracts/library/SafeMathDEOR.sol");
-var DEOR = artifacts.require("../contracts/DEOR.sol");
+var Oracle = artifacts.require("../contracts/Oracle.sol");
 
 module.exports = function (deployer, network) {
-  deployer.link(SafeMathDEOR, DEOR);
-  deployer.deploy(DEOR);
+  deployer.link(SafeMathDEOR, Oracle);
+  deployer.deploy(Oracle);
 };
