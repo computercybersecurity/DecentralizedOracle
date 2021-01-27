@@ -23,11 +23,11 @@ contract DEOR is IDEOR, Ownable {
         revert();
     }
 
-    function balanceOf(address _owner) public view override(IDEOR) returns (uint256) {
+    function balanceOf(address _owner) external view override(IDEOR) returns (uint256) {
         return balances[_owner];
     }
 
-    function transfer(address _to, uint256 _value) public override(IDEOR) returns (bool) {
+    function transfer(address _to, uint256 _value) external override(IDEOR) returns (bool) {
         balances[msg.sender] = balances[msg.sender].sub(_value);
         balances[_to] = balances[_to].add(_value);
 
@@ -35,7 +35,7 @@ contract DEOR is IDEOR, Ownable {
         return true;
     }
 
-    function transferFrom(address _from, address _to, uint256 _value) public override(IDEOR) returns (bool) {
+    function transferFrom(address _from, address _to, uint256 _value) external override(IDEOR) returns (bool) {
         uint256 _allowance = allowed[_from][msg.sender];
 
         balances[_to] = balances[_to].add(_value);
@@ -46,13 +46,13 @@ contract DEOR is IDEOR, Ownable {
         return true;
     }
 
-    function approve(address _spender, uint256 _value) public override(IDEOR) returns (bool) {
+    function approve(address _spender, uint256 _value) external override(IDEOR) returns (bool) {
         allowed[msg.sender][_spender] = _value;
         emit Approval(msg.sender, _spender, _value);
         return true;
     }
 
-    function allowance(address _owner, address _spender) public view override(IDEOR) returns (uint256) {
+    function allowance(address _owner, address _spender) external view override(IDEOR) returns (uint256) {
         return allowed[_owner][_spender];
     }
 
@@ -68,7 +68,7 @@ contract DEOR is IDEOR, Ownable {
     * @param _amount The amount of tokens to mint.
     * @return A boolean that indicates if the operation was successful.
     */
-    function mint(address _to, uint256 _amount) public onlyOwner canMint returns (bool) {
+    function mint(address _to, uint256 _amount) external onlyOwner canMint returns (bool) {
         totalSupply = totalSupply.add(_amount);
         balances[_to] = balances[_to].add(_amount);
         emit Mint(_to, _amount);
@@ -79,7 +79,7 @@ contract DEOR is IDEOR, Ownable {
     * Function to stop minting new tokens.
     * @return True if the operation was successful.
     */
-    function finishMinting() public onlyOwner returns (bool) {
+    function finishMinting() external onlyOwner returns (bool) {
         mintingFinished = true;
         emit MintFinished();
         return true;
