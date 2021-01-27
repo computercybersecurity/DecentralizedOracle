@@ -9,7 +9,7 @@ const start = () => {
 
   newRequest(async (error, result) => {
     try {
-      const { id, urlToQuery, requestMethod, requestBody, attributeToFetch } = result.args;
+      const { id, requestType, urlToQuery, requestMethod, requestBody, attributeToFetch } = result.args;
 
       const rawResponse = await fetch(urlToQuery, {
         method: requestMethod,
@@ -27,10 +27,20 @@ const start = () => {
         valueRetrieved = valueRetrieved[param];
       })
 
-      updateRequest({
-        id, 
-        valueRetrieved: (valueRetrieved || 0).toString()
-      });
+      if (requestType == "DataQuary") {
+        updateRequest({
+          id, 
+          valueRetrieved: (valueRetrieved || 0).toString(),
+          priceRetrieved: 0
+        });
+      }
+      else if (requestType == "PriceFeed") {
+        updateRequest({
+          id,
+          valueRetrieved: "",
+          priceRetrieved: Math.floor(parseFloat(valueRetrieved) * Math.pow(10, 18))
+        });
+      }
     }
     catch(error) {
       console.log(error);

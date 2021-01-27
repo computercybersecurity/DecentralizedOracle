@@ -22,6 +22,7 @@ const account = () => {
 };
 
 export const createRequest = ({
+  requestType,
   urlToQuery,
   requestMethod,
   requestBody,
@@ -29,7 +30,7 @@ export const createRequest = ({
 }) => {
   return new Promise((resolve, reject) => {
     account().then(account => {
-      contract.methods.createRequest(urlToQuery, requestMethod, requestBody, attributeToFetch).call({
+      contract.methods.createRequest(requestType, urlToQuery, requestMethod, requestBody, attributeToFetch).call({
         from: account.address,
         gas: 60000000
       }, (err, res) => {
@@ -45,11 +46,12 @@ export const createRequest = ({
 
 export const updateRequest = ({
   id,
-  valueRetrieved
+  valueRetrieved,
+  priceRetrieved
 }) => {
   return new Promise((resolve, reject) => {
     account().then(account => {
-      contract.methods.updateRequest(id, valueRetrieved).call({
+      contract.methods.updateRequest(id, valueRetrieved, priceRetrieved).call({
         from: account,
         gas: 60000000
       }, (err, res) => {

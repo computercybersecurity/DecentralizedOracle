@@ -7,12 +7,14 @@ import {
 
 const start = () => {
 
+  let requestType = process.env.REQUEST_TYPE;
   let urlToQuery = process.env.URL_TO_QUERY;
   let requestMethod = process.env.REQUEST_METHOD;
   let requestBody = process.env.REQUEST_BODY;
   let attributeToFetch = process.env.ATTRIBUTE_TO_FETCH;
 
   createRequest({
+      requestType,
       urlToQuery,
       requestMethod,
       requestBody,
