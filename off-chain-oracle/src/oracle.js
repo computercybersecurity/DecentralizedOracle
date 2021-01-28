@@ -27,7 +27,7 @@ const start = () => {
         valueRetrieved = valueRetrieved[param];
       })
 
-      if (requestType == "DataQuary") {
+      if (requestType == "DataQuery") {
         updateRequest({
           id, 
           valueRetrieved: (valueRetrieved || 0).toString(),

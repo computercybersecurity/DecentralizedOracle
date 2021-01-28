@@ -54,7 +54,7 @@ contract Oracle is Ownable, OracleInterface, Reputation, SelectionDEOR {
   uint256 cursorResolvedRequest = 0;
   uint256 constant public EXPIRY_TIME = 3 minutes;
   uint256 private requestFee = 10**18;   // request fee
-  string constant private TYPE_DATAQUERY = "DataQuary";
+  string constant private TYPE_DATAQUERY = "DataQuery";
   string constant private TYPE_PRICEFEED = "PriceFeed";
 
   // defines a general api request
@@ -199,10 +199,10 @@ contract Oracle is Ownable, OracleInterface, Reputation, SelectionDEOR {
     emit DeletedRequest(_id);
   }
 
-  function checkRetrievedValue (uint256 isDataQuary, Request storage currRequest, address oracleAddress, string memory _valueRetrieved, uint256 _priceRetrieved) 
+  function checkRetrievedValue (uint256 isDataQuery, Request storage currRequest, address oracleAddress, string memory _valueRetrieved, uint256 _priceRetrieved) 
     internal view returns (uint256)
   {
-    if (isDataQuary == 1) {
+    if (isDataQuery == 1) {
       bytes memory a = bytes(currRequest.anwers[oracleAddress]);
       bytes memory b = bytes(_valueRetrieved);
 
@@ -254,9 +254,9 @@ contract Oracle is Ownable, OracleInterface, Reputation, SelectionDEOR {
 
       bytes memory t1 = bytes(currRequest.requestType);
       bytes memory t2 = bytes(TYPE_DATAQUERY);
-      uint256 isDataQuary = 0;
+      uint256 isDataQuery = 0;
       if (keccak256(t1) == keccak256(t2)) {
-        isDataQuary = 1;
+        isDataQuery = 1;
       }
 
       oracles[address(msg.sender)].totalCompletedRequest ++;
@@ -266,7 +266,7 @@ contract Oracle is Ownable, OracleInterface, Reputation, SelectionDEOR {
       currRequest.quorum[msg.sender] = 2;
 
       //save the retrieved value
-      if (isDataQuary == 1) {
+      if (isDataQuery == 1) {
         currRequest.anwers[address(msg.sender)] = _valueRetrieved;
       }
       else {
@@ -278,7 +278,7 @@ contract Oracle is Ownable, OracleInterface, Reputation, SelectionDEOR {
       //iterate through oracle list and check if enough oracles(minimum quorum)
       //have voted the same answer has the current one
       for(uint256 i = 0; i < oracleCount; i++){
-        if (checkRetrievedValue(isDataQuary, currRequest, oracleAddresses[i], vlRetrieved, prRetrieved) == 1) {
+        if (checkRetrievedValue(isDataQuery, currRequest, oracleAddresses[i], vlRetrieved, prRetrieved) == 1) {
           currentQuorum = currentQuorum.add(oracles[oracleAddresses[i]].score);
         }
       }
@@ -292,7 +292,7 @@ contract Oracle is Ownable, OracleInterface, Reputation, SelectionDEOR {
 
         for(uint256 i = 0; i < oracleCount; i++){
 
-          if (checkRetrievedValue(isDataQuary, currRequest, oracleAddresses[i], vlRetrieved, prRetrieved) == 1) {
+          if (checkRetrievedValue(isDataQuery, currRequest, oracleAddresses[i], vlRetrieved, prRetrieved) == 1) {
             uint256 awardForRequest = currRequest.fee.div(currentQuorum).mul(oracles[oracleAddresses[i]].score);
             oracles[oracleAddresses[i]].totalAcceptedRequest ++;
             oracles[oracleAddresses[i]].totalEarned = oracles[oracleAddresses[i]].totalEarned.add(awardForRequest);
