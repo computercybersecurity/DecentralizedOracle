@@ -21,16 +21,30 @@ const account = () => {
   });
 };
 
+export const newOracle = () => {
+  return new Promise((resolve, reject) => {
+    account().then(account => {
+      contract.methods.newOracle().call({
+        from: account.address,
+        gas: 60000000
+      }, (err, res) => {
+        if (err === null) {
+          resolve(res);
+        } else {
+          reject(err);
+        }
+      });
+    }).catch(error => reject(error));
+  });
+}
+
 export const createRequest = ({
   requestType,
-  urlToQuery,
-  requestMethod,
-  requestBody,
-  attributeToFetch
+  params
 }) => {
   return new Promise((resolve, reject) => {
     account().then(account => {
-      contract.methods.createRequest(requestType, urlToQuery, requestMethod, requestBody, attributeToFetch).call({
+      contract.methods.createRequest(requestType, params).call({
         from: account.address,
         gas: 60000000
       }, (err, res) => {

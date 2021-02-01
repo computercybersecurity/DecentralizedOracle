@@ -2,43 +2,66 @@ require("dotenv").config();
 
 import {
   updateRequest,
-  newRequest
+  newRequest,
+  newOracle
 } from "./ethereum";
 
 const start = () => {
+  newOracle();
 
   newRequest(async (error, result) => {
     try {
-      const { id, requestType, urlToQuery, requestMethod, requestBody, attributeToFetch } = result.args;
-
-      const rawResponse = await fetch(urlToQuery, {
-        method: requestMethod,
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
-        },
-        body: requestBody
-      })
-
-      let valueRetrieved = await rawResponse.json();
-      const params = attributeToFetch.split(".");
-
-      params.forEach((param) => {
-        valueRetrieved = valueRetrieved[param];
-      })
+      const { id, requestType, params } = result.args;
 
       if (requestType == "DataQuery") {
-        updateRequest({
-          id, 
-          valueRetrieved: (valueRetrieved || 0).toString(),
-          priceRetrieved: 0
-        });
+        if (params.length > 0 ) {
+          const rawResponse = await fetch(params[0].urlToQuery, {
+            method: 'GET',
+            headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json'
+            }
+          })
+    
+          let valueRetrieved = await rawResponse.json();
+          const fetchParams = params[0].attributeToFetch.split(".");
+    
+          fetchParams.forEach((cur) => {
+            valueRetrieved = valueRetrieved[cur];
+          })
+  
+          updateRequest({
+            id, 
+            valueRetrieved: (valueRetrieved || 0).toString(),
+            priceRetrieved: 0
+          });  
+        }
       }
       else if (requestType == "PriceFeed") {
+        var sum = 0.0;
+        params.length > 0 && params.map(async (param) => {
+          const rawResponse = await fetch(param.urlToQuery, {
+            method: 'GET',
+            headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json'
+            }
+          })
+    
+          let valueRetrieved = await rawResponse.json();
+          const fetchParams = param.attributeToFetch.split(".");
+    
+          fetchParams.forEach((cur) => {
+            valueRetrieved = valueRetrieved[cur];
+          })
+
+          sum += parseFloat(valueRetrieved) * Math.pow(10, param.decimals);
+        })
+
         updateRequest({
           id,
           valueRetrieved: "",
-          priceRetrieved: Math.floor(parseFloat(valueRetrieved) * Math.pow(10, 18))
+          priceRetrieved: Math.floor(sum * Math.pow(10, 18) / params.length)
         });
       }
     }

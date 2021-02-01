@@ -11,11 +11,14 @@ contract DEOR is IDEOR, Ownable {
     mapping(address => uint256) balances;
     mapping (address => mapping (address => uint256)) allowed;
 
-    uint256 public totalSupply;
     string public constant name = "DEOR";
     string public constant symbol = "DEOR";
-    uint256 public constant decimals = 18;
+    uint256 public constant decimals = 10;
+    uint256 public totalSupply;
+    uint256 public maxSupply = 100000000 * (10**decimals);
     bool public mintingFinished = false;
+    bool public burned = false;
+	uint256 public startTime = 1488294000;
 
     constructor() public {}
 
@@ -69,8 +72,11 @@ contract DEOR is IDEOR, Ownable {
     * @return A boolean that indicates if the operation was successful.
     */
     function mint(address _to, uint256 _amount) external onlyOwner canMint returns (bool) {
-        totalSupply = totalSupply.add(_amount);
-        balances[_to] = balances[_to].add(_amount);
+        uint256 amount = maxSupply.sub(totalSupply);
+        if (amount > _amount) amount = _amount;
+        else this.finishMinting();
+        totalSupply = totalSupply.add(amount);
+        balances[_to] = balances[_to].add(amount);
         emit Mint(_to, _amount);
         return true;
     }
@@ -83,5 +89,20 @@ contract DEOR is IDEOR, Ownable {
         mintingFinished = true;
         emit MintFinished();
         return true;
+    }
+
+    /* to be called when ICO is closed, burns the remaining tokens but the owners share (50 000 000) and the ones reserved
+    *  for the bounty program (10 000 000).
+    *  anybody may burn the tokens after ICO ended, but only once (in case the owner holds more tokens in the future).
+    *  this ensures that the owner will not posses a majority of the tokens. */
+    function burn() external override(IDEOR) {
+    	//if tokens have not been burned already and the ICO ended
+    	if(!burned && now > startTime){
+    		uint difference = balances[owner].sub(5000000 * (10**decimals));//checked for overflow above
+    		balances[owner] = 5000000 * (10**decimals);
+    		totalSupply = totalSupply.sub(difference);
+    		burned = true;
+    		Burned(difference);
+    	}
     }
 }

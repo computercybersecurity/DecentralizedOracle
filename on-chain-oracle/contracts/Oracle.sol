@@ -1,5 +1,6 @@
 // pragma solidity >=0.4.21 <0.6.0;
 pragma solidity >=0.6.6;
+pragma experimental ABIEncoderV2;
 
 import "./interfaces/OracleInterface.sol";
 import "./interfaces/IDEOR.sol";
@@ -35,7 +36,7 @@ contract Reputation {
 
     function activityValidate(reputation memory self) internal view returns (uint256) {
         uint256 ACTIVE_EXPIRY_TIME = 1 days;
-        return block.timestamp.sub(self.lastActiveTime) < ACTIVE_EXPIRY_TIME ? 1 : 0;
+        return now.sub(self.lastActiveTime) < ACTIVE_EXPIRY_TIME ? 1 : 0;
     }
 }
 
@@ -61,16 +62,14 @@ contract Oracle is Ownable, OracleInterface, Reputation, SelectionDEOR {
   struct Request {
     uint256 id;                            //request id
     string requestType;                  //Request Type: "PriceFeed" or "DataQuery"
-    string urlToQuery;                  //API url
-    string requestMethod;                  //GET or POST
-    string requestBody;                  //API Request body
-    string attributeToFetch;            //json attribute (key) to retrieve in the response
     string agreedValue;                 //value from key
     uint256 timestamp;                     //Request Timestamp
     uint256 minQuorum;                     //minimum number of responses to receive before declaring final result
     uint256 fee;                            //transaction fee
     uint256 selectedOracleCount;                //selected oracle count
     uint256 agreedPrice;                     //price from key
+    uint256 paramsCount;
+    mapping (uint256 => RequestParam) params;
     mapping(address => string) anwers;     //answers provided by the oracles
     mapping(address => uint256) priceAnswers;     //answers provided by the oracles
     mapping(address => uint256) quorum;    //oracles which will query the answer (1=oracle hasn't voted, 2=oracle has voted)
@@ -78,16 +77,10 @@ contract Oracle is Ownable, OracleInterface, Reputation, SelectionDEOR {
 
   constructor(address tokenAddress) public {
     token = IDEOR(tokenAddress);
-    requests.push(Request(0, "", "", "", "", "", "", 0, 0, 0, 0, 0));
+    requests.push(Request(0, "", "", 0, 0, 0, 0, 0, 0));
   }
 
-  function getReputationStatus () external view returns (uint256, uint256, uint256, uint256)
-  {
-    reputation storage datum = oracles[msg.sender];
-    return (datum.totalAssignedRequest, datum.totalCompletedRequest, datum.totalAcceptedRequest, datum.totalResponseTime);
-  }
-
-  function newOracle () external override(OracleInterface)
+  function newOracle () public override(OracleInterface)
   {
     uint256 oracleCount = oracleAddresses.length;
     address sender = msg.sender;
@@ -99,7 +92,7 @@ contract Oracle is Ownable, OracleInterface, Reputation, SelectionDEOR {
     oracles[sender].totalCompletedRequest = 0;
     oracles[sender].totalAcceptedRequest = 0;
     oracles[sender].totalResponseTime = 0;
-    oracles[sender].lastActiveTime = block.timestamp;
+    oracles[sender].lastActiveTime = now;
     oracles[sender].score = 1;
     oracles[sender].penalty = requestFee;
     oracles[sender].totalEarned = 0;
@@ -123,21 +116,14 @@ contract Oracle is Ownable, OracleInterface, Reputation, SelectionDEOR {
   }
 
   function createRequest (
-    string calldata _requestType,
-    string calldata _urlToQuery,
-    string calldata _requestMethod,
-    string calldata _requestBody,
-    string calldata _attributeToFetch
+    string memory _requestType,
+    RequestParam[] memory _params
   )
-  external
-  override(OracleInterface)
+  public override(OracleInterface)
   {
     require(token.balanceOf(msg.sender) >= requestFee, "You haven't got enough tokens for transaction fee.");
     string memory requestType = _requestType;
-    string memory urlToQuery = _urlToQuery;
-    string memory requestMethod = _requestMethod;
-    string memory requestBody = _requestBody;
-    string memory attributeToFetch = _attributeToFetch;
+
     //Validate all oracles' acitivity
     uint i = 0;
     while (i < oracleAddresses.length) {
@@ -159,9 +145,13 @@ contract Oracle is Ownable, OracleInterface, Reputation, SelectionDEOR {
     uint256 oracleCount = oracleAddresses.length;
     uint selectedOracleCount = oracleCount.mul(2).div(3);
 
-    requests.push(Request(currentId, requestType, urlToQuery, requestMethod, requestBody, attributeToFetch, "", block.timestamp, 0, requestFee, selectedOracleCount, 0));
+    requests.push(Request(currentId, requestType, "", now, 0, requestFee, selectedOracleCount, 0, _params.length));
     uint256 length = requests.length;
     Request storage r = requests[length-1];
+
+    for (i = 0 ; i < _params.length ; i ++) {
+      r.params[i] = _params[i];
+    }
 
     uint256[] memory selectedOracles = getSelectedOracles(oracleCount, selectedOracleCount);
     uint256 scoreSum = 0;
@@ -183,10 +173,7 @@ contract Oracle is Ownable, OracleInterface, Reputation, SelectionDEOR {
     emit NewRequest (
       currentId,
       requestType,
-      urlToQuery,
-      requestMethod,
-      requestBody,
-      attributeToFetch
+      _params
     );
 
     // increase request id
@@ -194,7 +181,7 @@ contract Oracle is Ownable, OracleInterface, Reputation, SelectionDEOR {
   }
 
   //delete peding request
-  function deleteRequest (uint256 _id) external override(OracleInterface) {
+  function deleteRequest (uint256 _id) public override(OracleInterface) {
     delete requests[_id];
     emit DeletedRequest(_id);
   }
@@ -228,9 +215,9 @@ contract Oracle is Ownable, OracleInterface, Reputation, SelectionDEOR {
   //called by the oracle to record its answer
   function updateRequest (
     uint256 _id,
-    string calldata _valueRetrieved,
+    string memory _valueRetrieved,
     uint256 _priceRetrieved
-  ) external override(OracleInterface) {
+  ) public override(OracleInterface) {
 
     for (uint256 i = 0 ; i < maxResolvedCount ; i ++) {
       require(resolvedRequest[i] != _id, "This request is already resolved.");
@@ -240,11 +227,11 @@ contract Oracle is Ownable, OracleInterface, Reputation, SelectionDEOR {
     string memory vlRetrieved = _valueRetrieved;
     uint256 prRetrieved = _priceRetrieved;
 
-    uint256 responseTime = block.timestamp.sub(currRequest.timestamp);
+    uint256 responseTime = now.sub(currRequest.timestamp);
     require(responseTime < EXPIRY_TIME, "Your answer is expired.");
 
     //update last active time
-    oracles[address(msg.sender)].lastActiveTime = block.timestamp;
+    oracles[address(msg.sender)].lastActiveTime = now;
 
     uint256 oracleCount = oracleAddresses.length;
 
@@ -305,13 +292,16 @@ contract Oracle is Ownable, OracleInterface, Reputation, SelectionDEOR {
 
         currRequest.agreedValue = vlRetrieved;
         currRequest.agreedPrice = prRetrieved;
+
+        RequestParam[] storage params;
+        for (uint256 i = 0 ; i < currRequest.paramsCount ; i ++) {
+          params.push(currRequest.params[i]);
+        }
+
         emit UpdatedRequest (
           currRequest.id,
           currRequest.requestType,
-          currRequest.urlToQuery,
-          currRequest.requestMethod,
-          currRequest.requestBody,
-          currRequest.attributeToFetch,
+          params,
           vlRetrieved,
           prRetrieved
         );
