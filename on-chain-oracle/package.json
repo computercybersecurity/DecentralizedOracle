@@ -15,6 +15,7 @@
   "dependencies": {
     "@truffle/hdwallet-provider": "^1.2.1",
     "dotenv": "^5.0.1",
+    "fs": "0.0.1-security",
     "ganache-cli": "^6.1.2",
     "truffle": "^5.1.62"
   }

@@ -6,7 +6,6 @@ interface OracleInterface {
     struct RequestParam {
         string urlToQuery;
         string attributeToFetch;
-        uint256 decimals;
     }
 
     //event that triggers oracle outside of the blockchain

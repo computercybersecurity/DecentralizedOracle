@@ -4,10 +4,9 @@ pragma experimental ABIEncoderV2;
 
 import "./interfaces/OracleInterface.sol";
 import "./interfaces/IDEOR.sol";
-import "./library/SelectionDEOR.sol";
+import "./library/Selection.sol";
 import "./library/SafeMathDEOR.sol";
 import "./library/Ownable.sol";
-import "./DEOR.sol";
 
 contract Reputation {
     using SafeMathDEOR for uint256;
@@ -40,23 +39,22 @@ contract Reputation {
     }
 }
 
-contract Oracle is Ownable, OracleInterface, Reputation, SelectionDEOR {
+contract Oracle is Ownable, OracleInterface, Reputation, Selection {
   using SafeMathDEOR for uint256;
 
   IDEOR public token;
 
   Request[] private requests; //  list of requests made to the contract
   uint256 private currentId = 1; // increasing request id
-  uint256 private totalOracleCount = 2000; // Hardcoded oracle count
+  uint256 public totalOracleCount = 2000; // Hardcoded oracle count
   mapping(address => reputation) private oracles;        // Reputation of oracles
   address[] private oracleAddresses;      // Saved active oracle addresses
   uint256 constant private maxResolvedCount = 1000;
   uint256[] private resolvedRequest = new uint256[](maxResolvedCount);
   uint256 cursorResolvedRequest = 0;
   uint256 constant public EXPIRY_TIME = 3 minutes;
-  uint256 private requestFee = 10**18;   // request fee
-  string constant private TYPE_DATAQUERY = "DataQuery";
-  string constant private TYPE_PRICEFEED = "PriceFeed";
+  uint256 public requestFee = 10**18;   // request fee
+  uint256 public maxSelectOracleCount = 17;
 
   // defines a general api request
   struct Request {
@@ -75,9 +73,21 @@ contract Oracle is Ownable, OracleInterface, Reputation, SelectionDEOR {
     mapping(address => uint256) quorum;    //oracles which will query the answer (1=oracle hasn't voted, 2=oracle has voted)
   }
 
-  constructor(address tokenAddress) public {
+  constructor (address tokenAddress) public {
     token = IDEOR(tokenAddress);
     requests.push(Request(0, "", "", 0, 0, 0, 0, 0, 0));
+  }
+
+  function setMaximumSelectOracleCount (uint256 value) public onlyOwner {
+    maxSelectOracleCount = value;
+  }
+
+  function setRequestFee (uint256 fee) public onlyOwner {
+    requestFee = fee;
+  }
+
+  function setTotalOracleCount (uint256 count) public onlyOwner {
+    totalOracleCount = count;
   }
 
   function newOracle () public override(OracleInterface)
@@ -122,6 +132,7 @@ contract Oracle is Ownable, OracleInterface, Reputation, SelectionDEOR {
   public override(OracleInterface)
   {
     require(token.balanceOf(msg.sender) >= requestFee, "You haven't got enough tokens for transaction fee.");
+    require(token.transfer(owner, requestFee), "DEOR Transaction Failed.");
     string memory requestType = _requestType;
 
     //Validate all oracles' acitivity
@@ -144,6 +155,9 @@ contract Oracle is Ownable, OracleInterface, Reputation, SelectionDEOR {
 
     uint256 oracleCount = oracleAddresses.length;
     uint selectedOracleCount = oracleCount.mul(2).div(3);
+    if (selectedOracleCount > maxSelectOracleCount) {
+      selectedOracleCount = maxSelectOracleCount;
+    }
 
     requests.push(Request(currentId, requestType, "", now, 0, requestFee, selectedOracleCount, 0, _params.length));
     uint256 length = requests.length;
@@ -159,15 +173,14 @@ contract Oracle is Ownable, OracleInterface, Reputation, SelectionDEOR {
 
     for (i = 0; i < selectedOracles.length ; i ++) {
       address selOracle = oracleAddresses[selectedOracles[i]];
-      r.quorum[selOracle] = 1;
-      scoreSum = scoreSum.add(oracles[selOracle].score);
-      oracles[selOracle].totalAssignedRequest ++;
-      oracles[selOracle].penalty = penaltyForRequest;
-      token.transferFrom(selOracle, owner, penaltyForRequest);
+      if (token.transferFrom(selOracle, owner, penaltyForRequest)) {
+        r.quorum[selOracle] = 1;
+        scoreSum = scoreSum.add(oracles[selOracle].score);
+        oracles[selOracle].totalAssignedRequest ++;
+        oracles[selOracle].penalty = penaltyForRequest;
+      }
     }
     r.minQuorum = scoreSum.mul(2).div(3);          //minimum number of responses to receive before declaring final result(2/3 of total)
-
-    token.transfer(owner, requestFee);
 
     // launch an event to be detected by oracle outside of blockchain
     emit NewRequest (
@@ -240,7 +253,7 @@ contract Oracle is Ownable, OracleInterface, Reputation, SelectionDEOR {
     if(currRequest.quorum[address(msg.sender)] == 1){
 
       bytes memory t1 = bytes(currRequest.requestType);
-      bytes memory t2 = bytes(TYPE_DATAQUERY);
+      bytes memory t2 = bytes("DataQuery");
       uint256 isDataQuery = 0;
       if (keccak256(t1) == keccak256(t2)) {
         isDataQuery = 1;
@@ -307,5 +320,9 @@ contract Oracle is Ownable, OracleInterface, Reputation, SelectionDEOR {
         );
       }
     }
+  }
+
+  function close() public onlyOwner {
+    selfdestruct(payable(owner));
   }
 }

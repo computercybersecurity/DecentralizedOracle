@@ -29,7 +29,7 @@ const start = () => {
           fetchParams.forEach((cur) => {
             valueRetrieved = valueRetrieved[cur];
           })
-  
+
           updateRequest({
             id, 
             valueRetrieved: (valueRetrieved || 0).toString(),
@@ -55,7 +55,7 @@ const start = () => {
             valueRetrieved = valueRetrieved[cur];
           })
 
-          sum += parseFloat(valueRetrieved) * Math.pow(10, param.decimals);
+          sum += parseFloat(valueRetrieved);
         })
 
         updateRequest({
