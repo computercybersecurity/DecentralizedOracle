@@ -19,8 +19,8 @@ module.exports = {
         )
       },
       network_id: 42,
-      gas: 4712388,
-      gasPrice: 25000000000,
+      gas: 5000000,
+      gasPrice: 20000000000,
       confirmations: 2
     }
   },

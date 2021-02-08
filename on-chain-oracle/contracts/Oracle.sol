@@ -53,7 +53,7 @@ contract Oracle is Ownable, OracleInterface, Reputation, Selection {
   uint256[] private resolvedRequest = new uint256[](maxResolvedCount);
   uint256 cursorResolvedRequest = 0;
   uint256 constant public EXPIRY_TIME = 3 minutes;
-  uint256 public requestFee = 10**18;   // request fee
+  uint256 public requestFee = 10**10;   // request fee
   uint256 public maxSelectOracleCount = 17;
 
   // defines a general api request
@@ -98,18 +98,13 @@ contract Oracle is Ownable, OracleInterface, Reputation, Selection {
     require(oracles[sender].addr == address(0), "The oracle is already existed.");
 
     oracles[sender].addr = sender;
-    oracles[sender].totalAssignedRequest = 0;
-    oracles[sender].totalCompletedRequest = 0;
-    oracles[sender].totalAcceptedRequest = 0;
-    oracles[sender].totalResponseTime = 0;
     oracles[sender].lastActiveTime = now;
     oracles[sender].score = 1;
     oracles[sender].penalty = requestFee;
-    oracles[sender].totalEarned = 0;
     oracleAddresses.push(sender);
   }
 
-  function removeOracleByAddress (address addr) internal onlyOwner
+  function removeOracleByAddress (address addr) public onlyOwner
   {
     uint256 oracleCount = oracleAddresses.length;
 
@@ -142,12 +137,21 @@ contract Oracle is Ownable, OracleInterface, Reputation, Selection {
       uint256 tokenBalance = token.balanceOf(cursorAddress);
 
       if (tokenBalance < oracles[cursorAddress].penalty || activityValidate(oracles[cursorAddress]) == 0) {
-        //Remove invalide oracle
+        //Remove invalid oracle
+        oracles[cursorAddress].addr = address(0);      // Reset reputation of oracle to zero
+        oracles[cursorAddress].totalAssignedRequest = 0;
+        oracles[cursorAddress].totalCompletedRequest = 0;
+        oracles[cursorAddress].totalAcceptedRequest = 0;
+        oracles[cursorAddress].totalResponseTime = 0;
+        oracles[cursorAddress].lastActiveTime = now;
+        oracles[cursorAddress].score = 1;
+        oracles[cursorAddress].penalty = requestFee;
+        oracles[cursorAddress].totalEarned = 0;
+
         oracleAddresses[i] = oracleAddresses[oracleAddresses.length - 1];
         delete oracleAddresses[oracleAddresses.length - 1];
         oracleAddresses.pop();
 
-        oracles[cursorAddress].addr = address(0);      // Reset reputation of oracle to zero
         i --;
       }
       i ++;
