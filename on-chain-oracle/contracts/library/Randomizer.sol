@@ -6,29 +6,29 @@ pragma solidity >=0.6.6;
  * Randomizer to generating psuedo random numbers
  */
 contract Randomizer {
-    function getRandom(uint256 gamerange) internal view returns (uint256)
+    function getRandom(uint gamerange) internal view returns (uint)
     {
         return
-            uint256(
+            uint(
                 keccak256(
                     abi.encodePacked(
                         block.timestamp +
                             block.difficulty +
-                            uint256(keccak256(abi.encodePacked(block.coinbase)))
+                            uint(keccak256(abi.encodePacked(block.coinbase)))
                     )
                 )
             ) % gamerange;
     }
 
-    function getRandom(uint256 gamerange, uint256 seed) internal view returns (uint256)
+    function getRandom(uint gamerange, uint seed) internal view returns (uint)
     {
         return
-            uint256(
+            uint(
                 keccak256(
                     abi.encodePacked(
                         now +
                             block.difficulty +
-                            uint256(
+                            uint(
                                 keccak256(abi.encodePacked(block.coinbase))
                             ) +
                             seed
@@ -37,14 +37,14 @@ contract Randomizer {
             ) % gamerange;
     }
 
-    function getRandom() internal view returns (uint256) {
+    function getRandom() internal view returns (uint) {
         return
-            uint256(
+            uint(
                 keccak256(
                     abi.encodePacked(
                         block.timestamp +
                             block.difficulty +
-                            uint256(keccak256(abi.encodePacked(block.coinbase)))
+                            uint(keccak256(abi.encodePacked(block.coinbase)))
                     )
                 )
             );

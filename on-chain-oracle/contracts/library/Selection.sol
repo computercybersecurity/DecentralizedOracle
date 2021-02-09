@@ -6,20 +6,20 @@ import "./Randomizer.sol";
 contract Selection is Randomizer {
 
     struct Pair {
-        uint256 id;
-        uint256 value;
+        uint id;
+        uint value;
     }
 
     function quickSort(Pair[] memory arr, int left, int right) internal pure {
         int i = left;
         int j = right;
         if (i == j) return;
-        uint256 pivot = arr[uint256(left + (right - left) / 2)].value;
+        uint pivot = arr[uint(left + (right - left) / 2)].value;
         while (i <= j) {
-            while (arr[uint256(i)].value < pivot) i++;
-            while (pivot < arr[uint256(j)].value) j--;
+            while (arr[uint(i)].value < pivot) i++;
+            while (pivot < arr[uint(j)].value) j--;
             if (i <= j) {
-                (arr[uint256(i)], arr[uint256(j)]) = (arr[uint256(j)], arr[uint256(i)]);
+                (arr[uint(i)], arr[uint(j)]) = (arr[uint(j)], arr[uint(i)]);
                 i++;
                 j--;
             }
@@ -30,10 +30,10 @@ contract Selection is Randomizer {
             quickSort(arr, i, right);
     }
 
-    function getSelectedOracles(uint256 n, uint256 m) internal view returns (uint256[] memory) {
-        Pair[] memory data;
-        uint256[] memory res;
-        uint256 i = 0;
+    function getSelectedOracles(uint n, uint m) internal view returns (uint[] memory) {
+        Pair[] memory data = new Pair[](n);
+        uint[] memory res;
+        uint i = 0;
         
         for (i = 0 ; i < n ; i ++) {
             data[i] = Pair(i, getRandom(n));
@@ -41,7 +41,7 @@ contract Selection is Randomizer {
 
         quickSort(data, int(0), int(data.length - 1));
         
-        for (i = 0 ; i < m ; i ++) {
+        for (i = 0 ; i < m && i < n ; i ++) {
             res[i] = data[i].id;
         }
 

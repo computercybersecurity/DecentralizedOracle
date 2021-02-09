@@ -19,14 +19,15 @@ module.exports = {
         )
       },
       network_id: 42,
-      gas: 5000000,
+      gas: 12450000,
       gasPrice: 20000000000,
-      confirmations: 2
+      confirmations: 2,
+      websockets: true
     }
   },
   compilers: {
     solc: {
-      version: "0.6.6"
+      version: "0.6.6",
     }
   }
 };
