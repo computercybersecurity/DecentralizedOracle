@@ -7,7 +7,7 @@ interface OracleInterface {
         string urlToQuery;
         string attributeToFetch;
         string agreedValue;                 //value from key
-        uint timestamp;                     //Request Timestamp
+        uint256 timestamp;                     //Request Timestamp
         uint minQuorum;                     //minimum number of responses to receive before declaring final result
         uint256 fee;                            //transaction fee
         uint selectedOracleCount;                //selected oracle count
@@ -21,7 +21,7 @@ interface OracleInterface {
         uint256 totalCompletedRequest;       //total number of past requests that an oracle has fulfileed
         uint256 totalAcceptedRequest;        //total number of requests that have been accepted
         uint256 totalResponseTime;           //total seconds of response time
-        uint lastActiveTime;              //last active time of the oracle as second
+        uint256 lastActiveTime;              //last active time of the oracle as second
         uint256 penalty;                     //amount of penalty payment
         uint256 totalEarned;                 //total earned
     }

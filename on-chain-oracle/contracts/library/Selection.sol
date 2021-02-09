@@ -32,7 +32,7 @@ contract Selection is Randomizer {
 
     function getSelectedOracles(uint n, uint m) internal view returns (uint[] memory) {
         Pair[] memory data = new Pair[](n);
-        uint[] memory res;
+        uint[] memory res = new uint[](m);
         uint i = 0;
         
         for (i = 0 ; i < n ; i ++) {

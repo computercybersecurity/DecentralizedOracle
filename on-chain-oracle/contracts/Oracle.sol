@@ -18,7 +18,7 @@ contract Oracle is Ownable, OracleInterface, Selection {
   uint private totalOracleCount = 2000; // Hardcoded oracle count
   mapping(address => reputation) private oracles;        // Reputation of oracles
   address[] private oracleAddresses;      // Saved active oracle addresses
-  uint constant private EXPIRY_TIME = 3 minutes;
+  uint256 constant private EXPIRY_TIME = 3 minutes;
   uint256 public requestFee = 10**10;   // request fee
   uint private maxSelectOracleCount = 17;
 
@@ -81,10 +81,10 @@ contract Oracle is Ownable, OracleInterface, Selection {
   public override(OracleInterface)
   {
     require(token.balanceOf(msg.sender) >= requestFee, "Invalid fee.");
-    require(token.transfer(owner, requestFee), "DEOR transfer Failed.");
+    require(token.transferFrom(msg.sender, owner, requestFee), "DEOR transfer Failed.");
 
     uint i = 0;
-    uint selectedOracleCount = oracleAddresses.length * 2 / 3;
+    uint selectedOracleCount = (oracleAddresses.length * 2 + 2) / 3;
     if (selectedOracleCount > maxSelectOracleCount) {
       selectedOracleCount = maxSelectOracleCount;
     }
@@ -100,14 +100,14 @@ contract Oracle is Ownable, OracleInterface, Selection {
     for (i = 0; i < selectedOracles.length ; i ++) {
       address selOracle = oracleAddresses[selectedOracles[i]];
       //Validate oracle's acitivity
-      if (token.transferFrom(selOracle, owner, penaltyForRequest) && now.sub(oracles[selOracle].lastActiveTime) < 1 days) {
+      if (token.transferFrom(selOracle, owner, penaltyForRequest) && now < oracles[selOracle].lastActiveTime + 1 days) {
         r.quorum[selOracle] = 1;
         count ++;
         oracles[selOracle].totalAssignedRequest ++;
         oracles[selOracle].penalty = penaltyForRequest;
       }
     }
-    r.minQuorum = count * 2 / 3;          //minimum number of responses to receive before declaring final result(2/3 of total)
+    r.minQuorum = (count * 2 + 2) / 3;          //minimum number of responses to receive before declaring final result(2/3 of total)
 
     // launch an event to be detected by oracle outside of blockchain
     emit NewRequest (
@@ -128,7 +128,7 @@ contract Oracle is Ownable, OracleInterface, Selection {
 
     Request storage currRequest = requests[_id];
 
-    uint responseTime = now.sub(currRequest.timestamp);
+    uint256 responseTime = now.sub(currRequest.timestamp);
     require(responseTime < EXPIRY_TIME, "Your answer is expired.");
 
     //update last active time

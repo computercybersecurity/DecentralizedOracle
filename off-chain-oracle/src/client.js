@@ -3,16 +3,18 @@ require("dotenv").config();
 import {
   createRequest
 } from "./ethereum";
-import { REQUEST_PARAM } from "./config";
 
 
 const start = () => {
 
-  let requestType = process.env.REQUEST_TYPE;
+  let urlToQuery = process.env.URLTOQUERY;
+  let attributeToFetch = process.env.ATTRIBUTE_TO_FETCH;
+
+  console.log(urlToQuery);
 
   createRequest({
-      requestType,
-      params: REQUEST_PARAM
+      urlToQuery,
+      attributeToFetch
     })
     .then(restart)
     .catch(error);

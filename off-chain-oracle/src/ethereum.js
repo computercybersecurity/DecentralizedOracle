@@ -1,19 +1,47 @@
-require("dotenv").config();
+require('dotenv').config();
+var Web3 = require('web3');
 
-import Web3 from "web3";
+const eventProvider = new Web3.providers.WebsocketProvider(process.env.WEB3_PROVIDER_ADDRESS);
+const web3 = new Web3(eventProvider);
+const oracle_abi = JSON.parse(process.env.ABI);
+const oracle_address = process.env.CONTRACT_ADDRESS;
+const oracle_contract = new web3.eth.Contract(oracle_abi, oracle_address);
 
+const deor_abi = JSON.parse(process.env.DEOR_ABI);
+const deor_address = process.env.DEOR_ADDRESS;
+const deor_contract = new web3.eth.Contract(deor_abi, deor_address);
 
-const web3 = new Web3(new Web3.providers.HttpProvider(process.env.WEB3_PROVIDER_ADDRESS));
-const abi = JSON.parse(process.env.ABI);
-const address = process.env.CONTRACT_ADDRESS;
-const contract = new web3.eth.Contract(abi, address);
 const privateKey = process.env.PRIVATE_KEY;
+const maxSupply = 100000000 * Math.pow(10, 10);
 
 const account = () => {
   return new Promise(async (resolve, reject) => {
     try {
+      await web3.eth.accounts.wallet.add(privateKey);
       const account = await web3.eth.accounts.privateKeyToAccount(privateKey);
-      resolve(account);
+      web3.eth.defaultAccount = account.address;
+
+      deor_contract.methods.allowance(account.address, oracle_address).call({
+        from: account.address
+      }, (err, res) => {
+        if (parseFloat(res) < maxSupply) {
+          deor_contract.methods.approve(oracle_address, maxSupply.toString()).send({
+            from: account.address,
+            gas: 500000
+          }, (err, res) => {
+            console.log(err);
+            if (!err) {
+              resolve(account);
+            }
+            else {
+              reject(err);
+            }
+          });
+        }
+        else {
+          resolve(account);
+        }
+      });
     }
     catch (err) {
       reject(err);
@@ -21,12 +49,12 @@ const account = () => {
   });
 };
 
-export const newOracle = () => {
+module.exports.newOracle = () => {
   return new Promise((resolve, reject) => {
     account().then(account => {
-      contract.methods.newOracle().call({
+      oracle_contract.methods.newOracle().send({
         from: account.address,
-        gas: 60000000
+        gas: 600000
       }, (err, res) => {
         if (err === null) {
           resolve(res);
@@ -38,15 +66,15 @@ export const newOracle = () => {
   });
 }
 
-export const createRequest = ({
-  requestType,
-  params
+module.exports.createRequest = ({
+  urlToQuery,
+  attributeToFetch
 }) => {
   return new Promise((resolve, reject) => {
     account().then(account => {
-      contract.methods.createRequest(requestType, params).call({
+      oracle_contract.methods.createRequest(urlToQuery, attributeToFetch).send({
         from: account.address,
-        gas: 60000000
+        gas: 1000000
       }, (err, res) => {
         if (err === null) {
           resolve(res);
@@ -58,16 +86,15 @@ export const createRequest = ({
   });
 };
 
-export const updateRequest = ({
+module.exports.updateRequest = ({
   id,
-  valueRetrieved,
-  priceRetrieved
+  valueRetrieved
 }) => {
   return new Promise((resolve, reject) => {
     account().then(account => {
-      contract.methods.updateRequest(id, valueRetrieved, priceRetrieved).call({
-        from: account,
-        gas: 60000000
+      oracle_contract.methods.updateRequest(id, valueRetrieved).send({
+        from: account.address,
+        gas: 1000000
       }, (err, res) => {
         if (err === null) {
           resolve(res);
@@ -79,10 +106,10 @@ export const updateRequest = ({
   });
 };
 
-export const newRequest = (callback) => {
-  contract.NewRequest((error, result) => callback(error, result));
+module.exports.newRequest = (callback) => {
+  oracle_contract.events.NewRequest({}, callback);
 };
 
-export const updatedRequest = (callback) => {
-  contract.UpdatedRequest((error, result) => callback(error, result));
+module.exports.updatedRequest = (callback) => {
+  oracle_contract.events.UpdatedRequest({}, callback);
 };
