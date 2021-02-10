@@ -81,7 +81,7 @@ contract Crowdsale is Ownable {
 		require(crowdsaleClosed == false && now >= start, "Crowdsale is closed");
 		uint256 price = maxGoal.div(amountRaised);
 		uint256 totalEth = 0;
-		for (uint256 i = 0 ; i < investors.length ; i ++) {
+		for (uint i = 0 ; i < investors.length ; i ++) {
 			uint256 numTokens = price.mul(balanceOf[investors[i]]);
 			if (tokenReward.transferFrom(owner, investors[i], numTokens)) {
 				totalEth = totalEth.add(balanceOf[investors[i]]);

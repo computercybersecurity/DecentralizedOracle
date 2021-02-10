@@ -30,9 +30,9 @@ contract Selection is Randomizer {
             quickSort(arr, i, right);
     }
 
-    function getSelectedOracles(uint n, uint m) internal view returns (uint[] memory) {
+    function getSelectedOracles(uint n) internal view returns (uint[] memory) {
         Pair[] memory data = new Pair[](n);
-        uint[] memory res = new uint[](m);
+        uint[] memory res = new uint[](n);
         uint i = 0;
         
         for (i = 0 ; i < n ; i ++) {
@@ -41,7 +41,7 @@ contract Selection is Randomizer {
 
         quickSort(data, int(0), int(data.length - 1));
         
-        for (i = 0 ; i < m && i < n ; i ++) {
+        for (i = 0 ; i < n ; i ++) {
             res[i] = data[i].id;
         }
 

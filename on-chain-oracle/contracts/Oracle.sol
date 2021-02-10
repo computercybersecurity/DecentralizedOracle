@@ -1,6 +1,5 @@
 // pragma solidity >=0.4.21 <0.6.0;
 pragma solidity >=0.6.6;
-pragma experimental ABIEncoderV2;
 
 import "./interfaces/OracleInterface.sol";
 import "./interfaces/IDEOR.sol";
@@ -19,7 +18,7 @@ contract Oracle is Ownable, OracleInterface, Selection {
   mapping(address => reputation) private oracles;        // Reputation of oracles
   address[] private oracleAddresses;      // Saved active oracle addresses
   uint256 constant private EXPIRY_TIME = 3 minutes;
-  uint256 public requestFee = 10**10;   // request fee
+  uint256 public requestFee = 100 * (10**10);   // request fee
   uint private maxSelectOracleCount = 17;
 
   constructor (address tokenAddress) public {
@@ -40,24 +39,13 @@ contract Oracle is Ownable, OracleInterface, Selection {
     oracles[msg.sender].lastActiveTime = now;
     oracles[msg.sender].penalty = requestFee;
     oracleAddresses.push(msg.sender);
+
+    emit NewOracle(msg.sender);
   }
 
-  function getOracleReputations () public view returns (reputation[] memory) {
-    uint oracleCount = oracleAddresses.length;
-    reputation[] memory res = new reputation[](oracleCount);
-
-    for (uint i = 0; i < oracleCount ; i ++) {
-      res[i].addr = oracles[oracleAddresses[i]].addr;
-      res[i].totalAssignedRequest = oracles[oracleAddresses[i]].totalAssignedRequest;
-      res[i].totalCompletedRequest = oracles[oracleAddresses[i]].totalCompletedRequest;
-      res[i].totalAcceptedRequest = oracles[oracleAddresses[i]].totalAcceptedRequest;
-      res[i].totalResponseTime = oracles[oracleAddresses[i]].totalResponseTime;
-      res[i].lastActiveTime = oracles[oracleAddresses[i]].lastActiveTime;
-      res[i].penalty = oracles[oracleAddresses[i]].penalty;
-      res[i].totalEarned = oracles[oracleAddresses[i]].totalEarned;
-    }
-
-    return res;
+  function getOracleReputation (address addr) public view returns (uint256, uint256, uint256, uint256, uint256, uint256, uint256) {
+    reputation memory p = oracles[addr];
+    return (p.totalAssignedRequest, p.totalCompletedRequest, p.totalAcceptedRequest, p.totalResponseTime, p.lastActiveTime, p.penalty, p.totalEarned);
   }
 
   function removeOracleByAddress (address addr) public onlyOwner
@@ -84,7 +72,8 @@ contract Oracle is Ownable, OracleInterface, Selection {
     require(token.transferFrom(msg.sender, owner, requestFee), "DEOR transfer Failed.");
 
     uint i = 0;
-    uint selectedOracleCount = (oracleAddresses.length * 2 + 2) / 3;
+    uint len = oracleAddresses.length;
+    uint selectedOracleCount = (len * 2 + 2) / 3;
     if (selectedOracleCount > maxSelectOracleCount) {
       selectedOracleCount = maxSelectOracleCount;
     }
@@ -93,12 +82,12 @@ contract Oracle is Ownable, OracleInterface, Selection {
     uint256 length = requests.length;
     Request storage r = requests[length-1];
 
-    uint256[] memory selectedOracles = getSelectedOracles(oracleAddresses.length, selectedOracleCount);
+    uint256[] memory orderingOracles = getSelectedOracles(len);
     uint256 penaltyForRequest = requestFee.div(selectedOracleCount);
     uint count = 0;
 
-    for (i = 0; i < selectedOracles.length ; i ++) {
-      address selOracle = oracleAddresses[selectedOracles[i]];
+    for (i = 0; i < len && count < selectedOracleCount ; i ++) {
+      address selOracle = oracleAddresses[orderingOracles[i]];
       //Validate oracle's acitivity
       if (token.transferFrom(selOracle, owner, penaltyForRequest) && now < oracles[selOracle].lastActiveTime + 1 days) {
         r.quorum[selOracle] = 1;

@@ -26,6 +26,7 @@ interface OracleInterface {
         uint256 totalEarned;                 //total earned
     }
 
+    event NewOracle(address addr);
     event NewRequest(uint256 id, string urlToQuery, string attributeToFetch);
     event UpdatedRequest(uint256 id, string urlToQuery, string attributeToFetch, string agreedValue);
     event DeletedRequest(uint256 id);
