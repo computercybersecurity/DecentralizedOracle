@@ -28,8 +28,6 @@ contract Crowdsale is Ownable {
 	bool crowdsaleClosed = false;
 	/* notifying transfers and the success of the crowdsale*/
 	event GoalReached(address beneficiary, uint256 amountRaised);
-	event SetStartTime(uint256 time);
-	event SetDeadline(uint256 time);
 	event FundTransfer(address backer, uint256 amount, bool isContribution, uint256 amountRaised);
 
     /*  initialization, set the token address */
@@ -44,14 +42,12 @@ contract Crowdsale is Ownable {
 		else revert();
     }
 
-	function setStartTime(uint256 time) public onlyOwner {
-		start = time;
-		emit SetStartTime(time);
+	function checkFunds(address addr) public view returns (uint256) {
+		return balanceOf[addr];
 	}
 
-	function setDeadline(uint256 time) public onlyOwner {
-		deadline = time;
-		emit SetDeadline(time);
+	function getBalance() public view returns (uint256) {
+		return address(this).balance;
 	}
 
     /* make an investment
@@ -94,4 +90,14 @@ contract Crowdsale is Ownable {
         }
         crowdsaleClosed = true;
     }
+
+	function withdraw() public onlyOwner afterDeadline {
+		uint256 balance = address(this).balance;
+		require(balance > 0, "Balance is zero.");
+		uint256 devBalance = balance.div(5);
+		address payable dev = payable(devAddr);
+		address payable own = payable(owner);
+		dev.transfer(devBalance);						// 20% of raised amount for devs
+		own.transfer(balance.sub(devBalance));			// rest amount for owner
+	} 
 }

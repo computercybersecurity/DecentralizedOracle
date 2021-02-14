@@ -30,11 +30,12 @@ contract Oracle is Ownable, OracleInterface, Selection {
     requestFee = fee;
   }
 
-  function newOracle () public override(OracleInterface)
+  function newOracle (string memory name) public override(OracleInterface)
   {
     require(oracleAddresses.length < totalOracleCount, "oracle overflow");
     require(oracles[msg.sender].addr == address(0), "already exists");
 
+    oracles[msg.sender].name = name;
     oracles[msg.sender].addr = msg.sender;
     oracles[msg.sender].lastActiveTime = now;
     oracles[msg.sender].penalty = requestFee;
@@ -43,9 +44,9 @@ contract Oracle is Ownable, OracleInterface, Selection {
     emit NewOracle(msg.sender);
   }
 
-  function getOracleReputation (address addr) public view returns (uint256, uint256, uint256, uint256, uint256, uint256, uint256) {
+  function getOracleReputation (address addr) public view returns (string memory, uint256, uint256, uint256, uint256, uint256, uint256, uint256) {
     reputation memory p = oracles[addr];
-    return (p.totalAssignedRequest, p.totalCompletedRequest, p.totalAcceptedRequest, p.totalResponseTime, p.lastActiveTime, p.penalty, p.totalEarned);
+    return (p.name, p.totalAssignedRequest, p.totalCompletedRequest, p.totalAcceptedRequest, p.totalResponseTime, p.lastActiveTime, p.penalty, p.totalEarned);
   }
 
   function removeOracleByAddress (address addr) public onlyOwner

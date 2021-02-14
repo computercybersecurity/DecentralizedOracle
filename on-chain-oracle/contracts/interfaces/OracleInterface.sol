@@ -16,6 +16,7 @@ interface OracleInterface {
     }
 
     struct reputation {
+        string name;
         address addr;
         uint256 totalAssignedRequest;        //total number of past requests that an oracle has agreed to, both fulfilled and unfulfileed
         uint256 totalCompletedRequest;       //total number of past requests that an oracle has fulfileed
@@ -31,7 +32,7 @@ interface OracleInterface {
     event UpdatedRequest(uint256 id, string urlToQuery, string attributeToFetch, string agreedValue);
     event DeletedRequest(uint256 id);
 
-    function newOracle() external;
+    function newOracle(string calldata name) external;
     function createRequest(string calldata urlToQuery, string calldata attributeToFetch) external;
     function updateRequest(uint256 _id, string calldata _valueRetrieved) external;
 }
