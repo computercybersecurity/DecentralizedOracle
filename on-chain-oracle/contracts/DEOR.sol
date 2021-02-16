@@ -56,9 +56,9 @@ contract DEOR is IDEOR, Ownable {
     function transferFrom(address _from, address _to, uint256 _value) external override(IDEOR) returns (bool) {
         uint256 _allowance = _allowed[_from][msg.sender];
 
+        _allowed[_from][msg.sender] = _allowance.sub(_value);
         _balances[_to] = _balances[_to].add(_value);
         _balances[_from] = _balances[_from].sub(_value);
-        _allowed[_from][msg.sender] = _allowance.sub(_value);
 
         emit Transfer(_from, _to, _value);
         return true;

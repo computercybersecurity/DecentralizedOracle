@@ -12,6 +12,7 @@ const deor_address = process.env.DEOR_ADDRESS;
 const deor_contract = new web3.eth.Contract(deor_abi, deor_address);
 
 const privateKey = process.env.PRIVATE_KEY;
+const oracleName = process.env.ORACLE_NAME;
 const maxSupply = 100000000 * Math.pow(10, 10);
 
 const account = () => {
@@ -52,7 +53,7 @@ const account = () => {
 module.exports.newOracle = () => {
   return new Promise((resolve, reject) => {
     account().then(account => {
-      oracle_contract.methods.newOracle().send({
+      oracle_contract.methods.newOracle(oracleName).send({
         from: account.address,
         gas: 600000
       }, (err, res) => {
