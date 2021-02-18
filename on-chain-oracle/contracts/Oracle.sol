@@ -13,7 +13,7 @@ contract Oracle is Ownable, OracleInterface, Selection {
   IDEOR private token;
 
   Request[] private requests; //  list of requests made to the contract
-  uint256 private currentId = 1; // increasing request id
+  uint256 public currentId = 1; // increasing request id
   uint private totalOracleCount = 2000; // Hardcoded oracle count
   mapping(address => reputation) private oracles;        // Reputation of oracles
   address[] private oracleAddresses;      // Saved active oracle addresses
