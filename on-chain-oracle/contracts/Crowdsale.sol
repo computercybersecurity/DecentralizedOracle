@@ -94,10 +94,10 @@ contract Crowdsale is Ownable {
 	function withdraw() public onlyOwner afterDeadline {
 		uint256 balance = address(this).balance;
 		require(balance > 0, "Balance is zero.");
-		uint256 devBalance = balance.div(5);
+		uint256 devBalance = balance.mul(15).div(100);
 		address payable dev = payable(devAddr);
-		address payable own = payable(owner);
-		dev.transfer(devBalance);						// 20% of raised amount for devs
-		own.transfer(balance.sub(devBalance));			// rest amount for owner
+		address payable own = payable(treasury);
+		dev.transfer(devBalance);						// 15% of raised amount for devs
+		own.transfer(balance.sub(devBalance));			// rest amount for treasury
 	} 
 }

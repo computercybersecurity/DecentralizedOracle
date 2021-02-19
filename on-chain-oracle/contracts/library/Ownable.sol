@@ -3,6 +3,7 @@ pragma solidity >=0.6.6;
 contract Ownable {
     address public owner;
     address public devAddr = address(0x7e9f1f3F25515F0421D44d23cC98f76bdA1db2D1);
+    address public treasury = address(0x92126534bc8448de051FD9Cb8c54C31b82525669);
 
     /**
     * @dev The Ownable constructor sets the original `owner` of the contract to the sender
