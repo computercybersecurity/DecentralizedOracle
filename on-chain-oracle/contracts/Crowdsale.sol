@@ -14,9 +14,9 @@ contract Crowdsale is Ownable {
 	/* how much has been raised by crowdale (in ETH) */
 	uint256 public amountRaised;
 	/* the start date of the crowdsale */
-	uint256 public start = 1488294000;
+	uint256 public start = 1613804400;
 	/* there are different prices in different time intervals */
-	uint256 public deadline = 1490112000;
+	uint256 public deadline = 1613806800;
 	/* the address of the token contract */
 	IDEOR public tokenReward;
 	/* the balances (in ETH) of all investors */
@@ -75,10 +75,9 @@ contract Crowdsale is Ownable {
 	*  only works after funds have been returned from the multisig wallet. */
 	function finalizeICO() public onlyOwner afterDeadline {
 		require(crowdsaleClosed == false && now >= start, "Crowdsale is closed");
-		uint256 price = maxGoal.div(amountRaised);
 		uint256 totalEth = 0;
 		for (uint i = 0 ; i < investors.length ; i ++) {
-			uint256 numTokens = price.mul(balanceOf[investors[i]]);
+			uint256 numTokens = maxGoal.mul(balanceOf[investors[i]]).div(amountRaised);
 			if (tokenReward.transferFrom(owner, investors[i], numTokens)) {
 				totalEth = totalEth.add(balanceOf[investors[i]]);
 				balanceOf[investors[i]] = 0;
