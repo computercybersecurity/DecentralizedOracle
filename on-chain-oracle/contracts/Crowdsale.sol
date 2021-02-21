@@ -14,9 +14,11 @@ contract Crowdsale is Ownable {
 	/* how much has been raised by crowdale (in ETH) */
 	uint256 public amountRaised;
 	/* the start date of the crowdsale */
-	uint256 public start = 1613804400;
+	// uint256 public start = 1614556800;		// 2021-3-1 0:0:0
+	uint256 public start = 1613952000;		// 2021-2-22 0:0:0
 	/* there are different prices in different time intervals */
-	uint256 public deadline = 1613806800;
+	// uint256 public deadline = 1615161600;	// 2021-3-8 0:0:0
+	uint256 public deadline = 1614038400;	// 2021-2-23 0:0:0
 	/* the address of the token contract */
 	IDEOR public tokenReward;
 	/* the balances (in ETH) of all investors */

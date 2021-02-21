@@ -16,7 +16,7 @@ contract Oracle is Ownable, OracleInterface, Selection {
   uint256 public currentId = 1; // increasing request id
   uint private totalOracleCount = 2000; // Hardcoded oracle count
   mapping(address => reputation) private oracles;        // Reputation of oracles
-  address[] private oracleAddresses;      // Saved active oracle addresses
+  address[] public oracleAddresses;      // Saved active oracle addresses
   uint256 constant private EXPIRY_TIME = 3 minutes;
   uint256 public requestFee = 100 * (10**10);   // request fee
   uint private maxSelectOracleCount = 17;
