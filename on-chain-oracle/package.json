@@ -18,5 +18,8 @@
     "fs": "0.0.1-security",
     "ganache-cli": "^6.1.2",
     "truffle": "^5.1.62"
+  },
+  "devDependencies": {
+    "truffle-plugin-verify": "^0.5.4"
   }
 }
