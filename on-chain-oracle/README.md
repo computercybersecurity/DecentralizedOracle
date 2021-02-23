@@ -6,20 +6,15 @@ After cloning this repository and installing the above dependencies, perform
 $ yarn install
 ```
 
-Next, in one terminal, do
-
-```
-$ yarn run ganache-cli
-```
-
-Then, in another terminal, do
-
-```
 $ yarn run truffle compile
-$ yarn run truffle migrate
+
+$ yarn run truffle migrate --network main
+
+$ yarn run truffle run verify Crowdsale Oracle --network main
 ```
 
-which will deploy the contract onto your local ethereum blockchain.
+which will deploy the contract onto ethereum blockchain.
+
 
 
 

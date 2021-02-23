@@ -19,5 +19,7 @@ $ cp .env.example .env
 Start the weather oracle and the event lister with
 
 ```
-$ yarn develop
+$ yarn build
+
+$ yarn start
 ```
