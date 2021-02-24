@@ -88,8 +88,13 @@ contract DEOR is IDEOR, Ownable {
     */
     function mint(address _to, uint256 _amount) public onlyOwner canMint returns (bool) {
         uint256 amount = _maxSupply.sub(_totalSupply);
-        if (amount > _amount) amount = _amount;
-        else this.finishMinting();
+        if (amount > _amount) {
+            amount = _amount;
+        }
+        else {
+            mintingFinished = true;
+            emit MintFinished();
+        }
         _totalSupply = _totalSupply.add(amount);
         _balances[_to] = _balances[_to].add(amount);
         emit Mint(_to, _amount);
