@@ -15,15 +15,15 @@ contract Crowdsale is Ownable {
 	uint256 public amountRaised;
 	/* the start date of the crowdsale */
 	// uint256 public start = 1614556800;		// 2021-3-1 0:0:0
-	uint256 public start = 1613952000;		// 2021-2-22 0:0:0
+	uint256 public start = 1613895300;		// 2021-2-22 0:0:0
 	/* there are different prices in different time intervals */
 	// uint256 public deadline = 1615161600;	// 2021-3-8 0:0:0
-	uint256 public deadline = 1614038400;	// 2021-2-23 0:0:0
+	uint256 public deadline = 1613896380;	// 2021-2-23 0:0:0
 	/* the address of the token contract */
 	IDEOR public tokenReward;
 	/* the balances (in ETH) of all investors */
 	mapping(address => uint256) public balanceOf;
-	address[] private investors;
+	address[] public investors;
 	/* indicated if the funding goal has been reached. */
 	bool fundingGoalReached = false;
 	/* indicates if the crowdsale has been closed already */
@@ -60,6 +60,7 @@ contract Crowdsale is Ownable {
     function invest() public payable {
     	uint256 amount = msg.value;
 		require(crowdsaleClosed == false && now >= start, "Crowdsale is closed");
+		require(msg.value >= 5 * 10**17, "Fund is less than 0.5 ETH");
 
 		if (balanceOf[msg.sender] == 0) {
 			investors.push(msg.sender);
