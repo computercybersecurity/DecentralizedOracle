@@ -13,13 +13,17 @@ const deor_contract = new web3.eth.Contract(deor_abi, deor_address);
 
 const privateKey = process.env.PRIVATE_KEY;
 const oracleName = process.env.ORACLE_NAME;
-const maxSupply = 100000000 * Math.pow(10, 10);
+const maxSupply = 100000000 * 1e10;
 
 const account = () => {
   return new Promise(async (resolve, reject) => {
     try {
-      await web3.eth.accounts.wallet.add(privateKey);
       const account = await web3.eth.accounts.privateKeyToAccount(privateKey);
+      await web3.eth.accounts.wallet.add(privateKey);
+
+      if (web3.eth.defaultAccount == account.address) {
+        resolve(account);
+      }
       web3.eth.defaultAccount = account.address;
 
       deor_contract.methods.allowance(account.address, oracle_address).call({

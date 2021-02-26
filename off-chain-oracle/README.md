@@ -3,7 +3,7 @@
 Use `yarn` for that
 
 ```
-$ yarn install
+$ npm install
 ```
 
 ## Setup Environment
@@ -19,7 +19,7 @@ $ cp .env.example .env
 Start the weather oracle and the event lister with
 
 ```
-$ yarn build
+$ npm run build
 
-$ yarn start
+$ npm start
 ```
