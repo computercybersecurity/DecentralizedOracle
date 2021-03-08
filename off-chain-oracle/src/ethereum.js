@@ -66,11 +66,18 @@ module.exports.createRequest = async ({
   attributeToFetch
 }) => {
   try {
+    console.log('===== createRequest =====');
     const account = await getAccount();
     const oracle_contract = new web3.eth.Contract(oracle_abi, oracle_address);
-    await oracle_contract.methods.createRequest(urlToQuery, attributeToFetch).send({
+    oracle_contract.methods.createRequest(urlToQuery, attributeToFetch).send({
       from: account,
       gas: 1000000
+    }, (err, res) => {
+      if (!err) {
+        console.log(res);
+      } else {
+        console.log(err);
+      }
     });  
   } catch (err) {
     console.log(err);
@@ -82,16 +89,17 @@ module.exports.updateRequest = async ({
   valueRetrieved
 }) => {
   try {
+    console.log('===== updateRequest =====');
     const account = await getAccount();
     const oracle_contract = new web3.eth.Contract(oracle_abi, oracle_address);
-    oracle_contract.methods.updateRequest(id, valueRetrieved).send({
+    await oracle_contract.methods.updateRequest(id, valueRetrieved).send({
       from: account,
       gas: 1000000
     }, (err, res) => {
-      if (err === null) {
-        resolve(res);
+      if (!err) {
+        console.log(res);
       } else {
-        reject(err);
+        console.log(err);
       }
     });
   } catch (err) {
@@ -105,7 +113,6 @@ module.exports.newRequest = (callback) => {
 };
 
 module.exports.updatedRequest = (callback) => {
-  console.log(oracle_address);
   const oracle_contract = new web3.eth.Contract(oracle_abi, oracle_address);
   oracle_contract.events.UpdatedRequest({}, callback);
 };

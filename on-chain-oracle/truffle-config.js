@@ -36,8 +36,7 @@ module.exports = {
       network_id: 42,
       gas: 12450000,
       gasPrice: 20000000000,
-      confirmations: 2,
-      websockets: true
+      confirmations: 2
     }
   },
   compilers: {
@@ -49,6 +48,6 @@ module.exports = {
     'truffle-plugin-verify'
   ],
   api_keys: {
-    etherscan: 'RP2KJGG13ZPMUCEMHH5PQENFHUNR9AQP49'
+    etherscan: process.env.ETHERSCAN_API
   }
 };

@@ -8,4 +8,4 @@ var intv = setInterval(() => {
     clearInterval(intv);
     startConsumer();
     startClient();
-}, 3000);
+}, 5000);
