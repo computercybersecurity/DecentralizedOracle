@@ -4,37 +4,53 @@ var Randomizer = artifacts.require("../contracts/library/Randomizer.sol");
 var Selection = artifacts.require("../contracts/library/Selection.sol");
 var SafeMathDEOR = artifacts.require("../contracts/library/SafeMathDEOR.sol");
 var Oracle = artifacts.require("../contracts/Oracle.sol");
+var Oracles = artifacts.require("../contracts/Oracles.sol");
 var DEOR = artifacts.require("../contracts/DEOR.sol");
-var Crowdsale = artifacts.require("../contracts/Crowdsale.sol");
+var Upgradable = artifacts.require("../contracts/Upgradable.sol");
+
+const configs = require("../config.json");
 
 module.exports = async function (deployer, network) {
   try {
 		let dataParse = {};
 
-    let ownable = await deployer.deploy(Ownable);
-    await deployer.link(Ownable, [Oracle, DEOR, Crowdsale]);
-    dataParse['Ownable'] = Ownable.address;
-  
-    let randomizer = await deployer.deploy(Randomizer);
-    await deployer.link(Randomizer, Selection);
-    dataParse['Randomizer'] = Randomizer.address;
-  
-    let selection = await deployer.deploy(Selection);
-    await deployer.link(Selection, Oracle);
-    dataParse['Selection'] = Selection.address;
-    
-    let safemath = await deployer.deploy(SafeMathDEOR);
-    await deployer.link(SafeMathDEOR, [DEOR, Oracle, Crowdsale]);
-    dataParse['SafeMathDEOR'] = SafeMathDEOR.address;
+    await deployer.deploy(Ownable);
+    await deployer.link(Ownable, [Oracle, DEOR]);
+    dataParse['Ownable'] = Ownable.address;  
 
-    let deor = await deployer.deploy(DEOR);
-    dataParse['DEOR'] = DEOR.address;
+    await deployer.deploy(Randomizer);
+    await deployer.link(Randomizer, Selection);
+    dataParse['Randomizer'] = Randomizer.address;  
   
-    let crowdsale = await deployer.deploy(Crowdsale, dataParse['DEOR']);
-    dataParse['Crowdsale'] = Crowdsale.address;
+    await deployer.deploy(Selection);
+    await deployer.link(Selection, Oracle);
+    dataParse['Selection'] = Selection.address;  
+
+    await deployer.deploy(SafeMathDEOR);
+    await deployer.link(SafeMathDEOR, [DEOR, Oracle]);
+    dataParse['SafeMathDEOR'] = SafeMathDEOR.address;  
+
+    if (!configs.DEOR) {
+      await deployer.deploy(DEOR);
+      dataParse['DEOR'] = DEOR.address;  
+    }
+    else {
+      dataParse['DEOR'] = configs.DEOR;
+    }
   
-    let oracle = await deployer.deploy(Oracle, dataParse['DEOR']);  
+    if (!configs.Oracles) {
+      await deployer.deploy(Oracles);
+      dataParse['Oracles'] = Oracles.address;  
+    }
+    else {
+      dataParse['Oracles'] = configs.Oracles;
+    }
+
+    await deployer.deploy(Oracle, dataParse['DEOR'], dataParse['Oracles']);  
     dataParse['Oracle'] = Oracle.address;
+
+    await deployer.deploy(Upgradable, dataParse['Oracle']);
+    dataParse['Upgradable'] = Upgradable.address;
 
     const updatedData = JSON.stringify(dataParse);
 		await fs.promises.writeFile('contracts.json', updatedData);

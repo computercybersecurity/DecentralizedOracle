@@ -3,6 +3,7 @@ pragma solidity >=0.6.6;
 
 import "./interfaces/OracleInterface.sol";
 import "./interfaces/IDEOR.sol";
+import "./interfaces/IOracles.sol";
 import "./library/Selection.sol";
 import "./library/SafeMathDEOR.sol";
 import "./library/Ownable.sol";
@@ -11,18 +12,18 @@ contract Oracle is Ownable, OracleInterface, Selection {
   using SafeMathDEOR for uint256;
 
   IDEOR private token;
+  IOracles private oracles;
 
   Request[] private requests; //  list of requests made to the contract
   uint256 public currentId = 1; // increasing request id
   uint private totalOracleCount = 2000; // Hardcoded oracle count
-  mapping(address => reputation) private oracles;        // Reputation of oracles
-  address[] public oracleAddresses;      // Saved active oracle addresses
   uint256 constant private EXPIRY_TIME = 3 minutes;
   uint256 public requestFee = 100 * (10**10);   // request fee
   uint private maxSelectOracleCount = 17;
 
-  constructor (address tokenAddress) public {
+  constructor (address tokenAddress, address oracleAddress) public {
     token = IDEOR(tokenAddress);
+    oracles = IOracles(oracleAddress);
     requests.push(Request(0, "", "", "", 0, 0, 0, 0));
   }
 
@@ -32,35 +33,8 @@ contract Oracle is Ownable, OracleInterface, Selection {
 
   function newOracle (string memory name) public override(OracleInterface)
   {
-    require(oracleAddresses.length < totalOracleCount, "oracle overflow");
-    require(oracles[msg.sender].addr == address(0), "already exists");
-
-    oracles[msg.sender].name = name;
-    oracles[msg.sender].addr = msg.sender;
-    oracles[msg.sender].lastActiveTime = now;
-    oracles[msg.sender].penalty = requestFee;
-    oracleAddresses.push(msg.sender);
-
+    oracles.newOracle(name, msg.sender, requestFee);
     emit NewOracle(msg.sender);
-  }
-
-  function getOracleReputation (address addr) public view returns (string memory, uint256, uint256, uint256, uint256, uint256, uint256, uint256) {
-    reputation memory p = oracles[addr];
-    return (p.name, p.totalAssignedRequest, p.totalCompletedRequest, p.totalAcceptedRequest, p.totalResponseTime, p.lastActiveTime, p.penalty, p.totalEarned);
-  }
-
-  function removeOracleByAddress (address addr) public onlyOwner
-  {
-    for (uint i = 0; i < oracleAddresses.length ; i ++) {
-      if (oracleAddresses[i] == addr) {
-        oracleAddresses[i] = oracleAddresses[oracleAddresses.length - 1];
-        delete oracleAddresses[oracleAddresses.length - 1];
-        oracleAddresses.pop();
-
-        oracles[addr].addr = address(0);      // Reset reputation of oracle to zero
-        break;
-      }
-    }
   }
 
   function createRequest (
@@ -73,7 +47,7 @@ contract Oracle is Ownable, OracleInterface, Selection {
     require(token.transferFrom(msg.sender, owner, requestFee), "DEOR transfer Failed.");
 
     uint i = 0;
-    uint len = oracleAddresses.length;
+    uint len = oracles.getOracleCount();
     uint selectedOracleCount = (len * 2 + 2) / 3;
     if (selectedOracleCount > maxSelectOracleCount) {
       selectedOracleCount = maxSelectOracleCount;
@@ -88,13 +62,12 @@ contract Oracle is Ownable, OracleInterface, Selection {
     uint count = 0;
 
     for (i = 0; i < len && count < selectedOracleCount ; i ++) {
-      address selOracle = oracleAddresses[orderingOracles[i]];
+      address selOracle = oracles.getOracleByIndex(orderingOracles[i]);
       //Validate oracle's acitivity
-      if (token.transferFrom(selOracle, owner, penaltyForRequest) && now < oracles[selOracle].lastActiveTime + 1 days) {
+      if (token.transferFrom(selOracle, owner, penaltyForRequest) && now < oracles.getOracleLastActiveTime(selOracle) + 1 days) {
         r.quorum[selOracle] = 1;
         count ++;
-        oracles[selOracle].totalAssignedRequest ++;
-        oracles[selOracle].penalty = penaltyForRequest;
+        oracles.increaseOracleAssigned(selOracle, penaltyForRequest);
       }
     }
     r.minQuorum = (count * 2 + 2) / 3;          //minimum number of responses to receive before declaring final result(2/3 of total)
@@ -122,14 +95,13 @@ contract Oracle is Ownable, OracleInterface, Selection {
     require(responseTime < EXPIRY_TIME, "Your answer is expired.");
 
     //update last active time
-    oracles[msg.sender].lastActiveTime = now;
+    oracles.updateOracleLastActiveTime(msg.sender);
 
     //check if oracle is in the list of trusted oracles
     //and if the oracle hasn't voted yet
     if(currRequest.quorum[msg.sender] == 1){
 
-      oracles[msg.sender].totalCompletedRequest ++;
-      oracles[msg.sender].totalResponseTime = oracles[msg.sender].totalResponseTime + responseTime;
+      oracles.increaseOracleCompleted(msg.sender, responseTime);
 
       //marking that this address has voted
       currRequest.quorum[msg.sender] = 2;
@@ -139,12 +111,13 @@ contract Oracle is Ownable, OracleInterface, Selection {
 
       uint i = 0;
       uint256 currentQuorum = 0;
-      uint8[] memory flag = new uint8[](oracleAddresses.length);
+      uint len = oracles.getOracleCount();
+      uint8[] memory flag = new uint8[](len);
 
       //iterate through oracle list and check if enough oracles(minimum quorum)
       //have voted the same answer has the current one
-      for(i = 0; i < oracleAddresses.length; i++){
-        bytes memory a = bytes(currRequest.anwers[oracleAddresses[i]]);
+      for(i = 0; i < len; i++){
+        bytes memory a = bytes(currRequest.anwers[oracles.getOracleByIndex(i)]);
         bytes memory b = bytes(_valueRetrieved);
 
         if(keccak256(a) == keccak256(b)) {
@@ -158,13 +131,13 @@ contract Oracle is Ownable, OracleInterface, Selection {
 
         uint256 penaltyForRequest = currRequest.fee.div(currRequest.selectedOracleCount);
 
-        for(i = 0; i < oracleAddresses.length; i++){
+        for(i = 0; i < len; i++){
 
           if (flag[i] == 1) {
             uint256 awardForRequest = currRequest.fee.div(currentQuorum);
-            oracles[oracleAddresses[i]].totalAcceptedRequest ++;
-            oracles[oracleAddresses[i]].totalEarned = oracles[oracleAddresses[i]].totalEarned + awardForRequest;
-            token.transferFrom(owner, oracleAddresses[i], awardForRequest + penaltyForRequest);
+            address addr = oracles.getOracleByIndex(i);
+            oracles.increaseOracleAccepted(addr, awardForRequest);
+            token.transferFrom(owner, addr, awardForRequest + penaltyForRequest);
           }
         }
 

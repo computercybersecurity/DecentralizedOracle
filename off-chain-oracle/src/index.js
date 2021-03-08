@@ -3,5 +3,9 @@ import startConsumer from "./consumer";
 import startClient from "./client";
 
 startOracle();
-startConsumer();
-startClient();
+
+var intv = setInterval(() => {
+    clearInterval(intv);
+    startConsumer();
+    startClient();
+}, 3000);

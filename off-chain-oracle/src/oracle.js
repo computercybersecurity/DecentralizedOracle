@@ -7,8 +7,8 @@ import {
   newOracle
 } from "./ethereum";
 
-const start = () => {
-  newOracle();
+const start = async () => {
+  await newOracle();
 
   newRequest(async (error, event) => {
     console.log(error, event);
