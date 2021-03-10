@@ -5,7 +5,7 @@ import {
 
 const consume = () => {
   updatedRequest((error, event) => {
-    console.log(error, event)
+    console.log(error, event.returnValues)
     console.log("UPDATE REQUEST DATA EVENT ON SMART CONTRACT");
     // console.log("BLOCK NUMBER: ");
     // console.log("  " + result.blockNumber)
@@ -15,7 +15,7 @@ const consume = () => {
   });
 
   newRequest((error, event) => {
-    console.log(error, event);
+    console.log(error, event.returnValues);
     console.log("NEW REQUEST DATA EVENT ON SMART CONTRACT");
     // console.log("BLOCK NUMBER: ");
     // console.log("  " + result.blockNumber)

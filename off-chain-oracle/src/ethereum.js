@@ -57,7 +57,7 @@ module.exports.newOracle = async () => {
       gas: 600000
     });  
   } catch (err) {
-    console.log(err);
+    // console.log(err);
   }
 }
 
@@ -68,9 +68,10 @@ module.exports.createRequest = async ({
 }) => {
   try {
     console.log('===== createRequest =====');
+    console.log(queries, qtype, contractAddr)
     const account = await getAccount();
     const oracle_contract = new web3.eth.Contract(oracle_abi, oracle_address);
-    oracle_contract.methods.createRequest(queries, qtype, contractAddr).send({
+    oracle_contract.methods.createRequest(queries, qtype, contractAddr.length > 0 ? contractAddr : 0x01).send({
       from: account,
       gas: 1000000
     }, (err, res) => {

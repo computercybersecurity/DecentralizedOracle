@@ -11,7 +11,7 @@ const start = async () => {
   await newOracle();
 
   newRequest(async (error, event) => {
-    console.log(error, event);
+    console.log(event.returnValues);
     try {
       const { id, queries, qtype } = event.returnValues;
       const queriesJSON = JSON.parse(queries);
@@ -36,23 +36,24 @@ const start = async () => {
           else {
             var updatedValue = null;
             valueRetrieved && valueRetrieved.map((curValue) => {
-              if (cur[att["searchBy"]] === att["value"]) {
+              if (curValue[att["searchBy"]] === att["value"]) {
                 updatedValue = curValue;
-                break;
               }
             })
             valueRetrieved = updatedValue;
           }
         }
-        else if (att["type"] === 'array') {
+        else if (att["type"] === 'object') {
           valueRetrieved = valueRetrieved[att["object"]];
         }
       })
 
+      console.log(valueRetrieved)
+
       updateRequest({
         id, 
-        valueRetrieved: qtype === 0 ? valueRetrieved.toString() : "",
-        priceRetrieved: qtype === 1 ? Math.floor(parseFloat(valueRetrieved) * 1e18) : 0
+        valueRetrieved: parseInt(qtype) === 0 ? valueRetrieved.toString() : "",
+        priceRetrieved: parseInt(qtype) === 1 ? `0x${Math.floor(parseFloat(valueRetrieved) * 1e18).toString(16)}` : 0
       });
     }
     catch(error) {
