@@ -175,7 +175,7 @@ contract Oracle is Ownable, OracleInterface, Selection {
 
         currRequest.agreedValue = _valueRetrieved;
 
-        if (currRequest.qtype == 0) {     // price aggregator
+        if (currRequest.qtype == 0) {     // data aggregator
           IDataQuery _feed = IDataQuery(currRequest.contractAddr);
           _feed.addRequestAnswer(_valueRetrieved);
         }
