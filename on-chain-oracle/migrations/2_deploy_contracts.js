@@ -53,8 +53,8 @@ module.exports = async function (deployer, network) {
     await deployer.deploy(Upgradable, dataParse['Oracle']);
     dataParse['Upgradable'] = Upgradable.address;
 
-    // await deployer.deploy(PriceFeed, "ETHUSDT");
-    // dataParse['ETHUSDT'] = PriceFeed.address;
+    await deployer.deploy(PriceFeed, "ETHUSDT");
+    dataParse['ETHUSDT'] = PriceFeed.address;
 
     const updatedData = JSON.stringify(dataParse);
 		await fs.promises.writeFile('contracts.json', updatedData);

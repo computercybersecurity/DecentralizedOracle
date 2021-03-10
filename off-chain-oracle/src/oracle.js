@@ -14,8 +14,9 @@ const start = async () => {
     console.log(error, event);
     try {
       const { id, queries, qtype } = event.returnValues;
-      const idx = Math.floor(Math.random() * queries.length);
-      const query = queries[idx];
+      const queriesJSON = JSON.parse(queries);
+      const idx = Math.floor(Math.random() * queriesJSON.length);
+      const query = queriesJSON[idx];
 
       const rawResponse = await fetch(query.url, {
         method: 'GET',
