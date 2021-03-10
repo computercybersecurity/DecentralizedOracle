@@ -4,6 +4,7 @@ pragma solidity >=0.6.6;
 import "./interfaces/OracleInterface.sol";
 import "./interfaces/IDEOR.sol";
 import "./interfaces/IOracles.sol";
+import "./interfaces/IPriceFeed.sol";
 import "./library/Selection.sol";
 import "./library/SafeMathDEOR.sol";
 import "./library/Ownable.sol";
@@ -24,7 +25,7 @@ contract Oracle is Ownable, OracleInterface, Selection {
   constructor (address tokenAddress, address oracleAddress) public {
     token = IDEOR(tokenAddress);
     oracles = IOracles(oracleAddress);
-    requests.push(Request(0, "", "", "", 0, 0, 0, 0));
+    requests.push(Request(0, "", 0, address(0x0), "", 0, 0, 0, 0, 0));
   }
 
   function setRequestFee (uint256 fee) public onlyOwner {
@@ -38,8 +39,9 @@ contract Oracle is Ownable, OracleInterface, Selection {
   }
 
   function createRequest (
-    string memory urlToQuery,
-    string memory attributeToFetch
+    string memory queries,
+    uint8 qtype,
+    address contractAddr
   )
   public override(OracleInterface)
   {
@@ -53,7 +55,7 @@ contract Oracle is Ownable, OracleInterface, Selection {
       selectedOracleCount = maxSelectOracleCount;
     }
 
-    requests.push(Request(currentId, urlToQuery, attributeToFetch, "", now, 0, requestFee, selectedOracleCount));
+    requests.push(Request(currentId, queries, qtype, contractAddr, "", 0, block.timestamp, 0, requestFee, selectedOracleCount));
     uint256 length = requests.length;
     Request storage r = requests[length-1];
 
@@ -75,23 +77,50 @@ contract Oracle is Ownable, OracleInterface, Selection {
     // launch an event to be detected by oracle outside of blockchain
     emit NewRequest (
       currentId,
-      urlToQuery,
-      attributeToFetch
+      queries,
+      qtype
     );
 
     // increase request id
-    currentId++;
+    currentId ++;
+  }
+
+  function checkRetrievedValue (Request storage currRequest, address oracleAddress, string memory _valueRetrieved, int256 _priceRetrieved) 
+    internal view returns (bool)
+  {
+    if (currRequest.qtype == 0) {
+      bytes memory a = bytes(currRequest.answers[oracleAddress]);
+      bytes memory b = bytes(_valueRetrieved);
+
+      if(keccak256(a) == keccak256(b)) {
+        return true;
+      }
+    }
+    else {
+      int256 diff = 0;
+      if (currRequest.priceAnswers[oracleAddress] > _priceRetrieved) {
+        diff = currRequest.priceAnswers[oracleAddress] - _priceRetrieved;
+      }
+      else {
+        diff = _priceRetrieved - currRequest.priceAnswers[oracleAddress];
+      }
+      if (diff < _priceRetrieved / 200) {
+        return true;
+      }
+    }
+    return false;
   }
 
   //called by the oracle to record its answer
   function updateRequest (
     uint256 _id,
-    string memory _valueRetrieved
+    string memory _valueRetrieved,
+    int256 _priceRetrieved
   ) public override(OracleInterface) {
 
     Request storage currRequest = requests[_id];
 
-    uint256 responseTime = now.sub(currRequest.timestamp);
+    uint256 responseTime = block.timestamp.sub(currRequest.timestamp);
     require(responseTime < EXPIRY_TIME, "Your answer is expired.");
 
     //update last active time
@@ -107,7 +136,12 @@ contract Oracle is Ownable, OracleInterface, Selection {
       currRequest.quorum[msg.sender] = 2;
 
       //save the retrieved value
-      currRequest.anwers[msg.sender] = _valueRetrieved;
+      if (currRequest.qtype == 0) {
+        currRequest.answers[msg.sender] = _valueRetrieved;
+      }
+      else {
+        currRequest.priceAnswers[msg.sender] = _priceRetrieved;
+      }
 
       uint i = 0;
       uint256 currentQuorum = 0;
@@ -116,22 +150,19 @@ contract Oracle is Ownable, OracleInterface, Selection {
 
       //iterate through oracle list and check if enough oracles(minimum quorum)
       //have voted the same answer has the current one
-      for(i = 0; i < len; i++){
-        bytes memory a = bytes(currRequest.anwers[oracles.getOracleByIndex(i)]);
-        bytes memory b = bytes(_valueRetrieved);
-
-        if(keccak256(a) == keccak256(b)) {
+      for (i = 0 ; i < len ; i ++) {
+        if (checkRetrievedValue(currRequest, oracles.getOracleByIndex(i), _valueRetrieved, _priceRetrieved)) {
           currentQuorum ++;
           flag[i] = 1;
         }
       }
 
       //request Resolved
-      if(currentQuorum >= currRequest.minQuorum){
+      if(currentQuorum >= currRequest.minQuorum) {
 
         uint256 penaltyForRequest = currRequest.fee.div(currRequest.selectedOracleCount);
 
-        for(i = 0; i < len; i++){
+        for (i = 0 ; i < len ; i ++) {
 
           if (flag[i] == 1) {
             uint256 awardForRequest = currRequest.fee.div(currentQuorum);
@@ -143,11 +174,19 @@ contract Oracle is Ownable, OracleInterface, Selection {
 
         currRequest.agreedValue = _valueRetrieved;
 
+        if (currRequest.qtype == 1) {     // price aggregator
+          if (currRequest.contractAddr != address(0x0)) {
+            IPriceFeed _feed = IPriceFeed(currRequest.contractAddr);
+            _feed.addRequestAnswer(_priceRetrieved);
+          }
+        }
+
         emit UpdatedRequest (
           currRequest.id,
-          currRequest.urlToQuery,
-          currRequest.attributeToFetch,
-          _valueRetrieved
+          currRequest.queries,
+          currRequest.qtype,
+          _valueRetrieved,
+          _priceRetrieved
         );
       }
     }

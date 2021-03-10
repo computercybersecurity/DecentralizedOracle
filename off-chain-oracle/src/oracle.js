@@ -13,9 +13,11 @@ const start = async () => {
   newRequest(async (error, event) => {
     console.log(error, event);
     try {
-      const { id, urlToQuery, attributeToFetch } = event.returnValues;
+      const { id, queries, qtype } = event.returnValues;
+      const idx = Math.floor(Math.random() * queries.length);
+      const query = queries[idx];
 
-      const rawResponse = await fetch(urlToQuery, {
+      const rawResponse = await fetch(query.url, {
         method: 'GET',
         headers: {
           'Accept': 'application/json',
@@ -24,16 +26,33 @@ const start = async () => {
       })
 
       let valueRetrieved = await rawResponse.json();
-      const fetchParams = attributeToFetch.split(".");
 
-      fetchParams.forEach((cur) => {
-        valueRetrieved = valueRetrieved[cur];
+      query.attributes && query.attributes.map((att) => {
+        if (att["type"] === 'array') {
+          if (!att["searchBy"] || att["searchBy"].length === 0) {
+            valueRetrieved = valueRetrieved[att["value"]];
+          }
+          else {
+            var updatedValue = null;
+            valueRetrieved && valueRetrieved.map((curValue) => {
+              if (cur[att["searchBy"]] === att["value"]) {
+                updatedValue = curValue;
+                break;
+              }
+            })
+            valueRetrieved = updatedValue;
+          }
+        }
+        else if (att["type"] === 'array') {
+          valueRetrieved = valueRetrieved[att["object"]];
+        }
       })
 
       updateRequest({
         id, 
-        valueRetrieved: (valueRetrieved || 0).toString()
-      });  
+        valueRetrieved: qtype === 0 ? valueRetrieved.toString() : "",
+        priceRetrieved: qtype === 1 ? Math.floor(parseFloat(valueRetrieved) * 1e18) : 0
+      });
     }
     catch(error) {
       console.log(error);

@@ -3,21 +3,19 @@ require("dotenv").config();
 import {
   createRequest
 } from "./ethereum";
-
+import client_config from './client_config.json';
 
 const start = () => {
 
-  let urlToQuery = process.env.URLTOQUERY;
-  let attributeToFetch = process.env.ATTRIBUTE_TO_FETCH;
-
-  console.log(urlToQuery);
+  const queries = JSON.stringify(client_config.queries);
 
   createRequest({
-      urlToQuery,
-      attributeToFetch
-    })
-    .then(restart)
-    .catch(error);
+    queries,
+    qtype: client_config["type"] === 'query' ? 0 : 1,
+    contractAddr: client_config["contractAddr"]
+  })
+  .then(restart)
+  .catch(error);
 };
 
 const restart = () => {

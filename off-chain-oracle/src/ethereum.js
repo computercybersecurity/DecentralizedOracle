@@ -62,14 +62,15 @@ module.exports.newOracle = async () => {
 }
 
 module.exports.createRequest = async ({
-  urlToQuery,
-  attributeToFetch
+  queries,
+  qtype,
+  contractAddr
 }) => {
   try {
     console.log('===== createRequest =====');
     const account = await getAccount();
     const oracle_contract = new web3.eth.Contract(oracle_abi, oracle_address);
-    oracle_contract.methods.createRequest(urlToQuery, attributeToFetch).send({
+    oracle_contract.methods.createRequest(queries, qtype, contractAddr).send({
       from: account,
       gas: 1000000
     }, (err, res) => {
@@ -86,13 +87,14 @@ module.exports.createRequest = async ({
 
 module.exports.updateRequest = async ({
   id,
-  valueRetrieved
+  valueRetrieved,
+  priceRetrieved
 }) => {
   try {
     console.log('===== updateRequest =====');
     const account = await getAccount();
     const oracle_contract = new web3.eth.Contract(oracle_abi, oracle_address);
-    await oracle_contract.methods.updateRequest(id, valueRetrieved).send({
+    await oracle_contract.methods.updateRequest(id, valueRetrieved, priceRetrieved).send({
       from: account,
       gas: 1000000
     }, (err, res) => {
