@@ -8,6 +8,7 @@ var Oracles = artifacts.require("../contracts/Oracles.sol");
 var DEOR = artifacts.require("../contracts/DEOR.sol");
 var Upgradable = artifacts.require("../contracts/Upgradable.sol");
 var PriceFeed = artifacts.require("../contracts/PriceFeed.sol");
+var DataQuery = artifacts.require("../contracts/DataQuery.sol");
 
 const configs = require("../config.json");
 
@@ -55,6 +56,9 @@ module.exports = async function (deployer, network) {
 
     await deployer.deploy(PriceFeed, "ETHUSDT");
     dataParse['ETHUSDT'] = PriceFeed.address;
+
+    await deployer.deploy(DataQuery, "ETHUSDT");
+    dataParse['DataQuery'] = DataQuery.address;
 
     const updatedData = JSON.stringify(dataParse);
 		await fs.promises.writeFile('contracts.json', updatedData);

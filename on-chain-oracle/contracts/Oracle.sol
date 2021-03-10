@@ -5,6 +5,7 @@ import "./interfaces/OracleInterface.sol";
 import "./interfaces/IDEOR.sol";
 import "./interfaces/IOracles.sol";
 import "./interfaces/IPriceFeed.sol";
+import "./interfaces/IDataQuery.sol";
 import "./library/Selection.sol";
 import "./library/SafeMathDEOR.sol";
 import "./library/Ownable.sol";
@@ -175,6 +176,10 @@ contract Oracle is Ownable, OracleInterface, Selection {
         currRequest.agreedValue = _valueRetrieved;
 
         if (currRequest.qtype == 1) {     // price aggregator
+          IDataQuery _feed = IDataQuery(currRequest.contractAddr);
+          _feed.addRequestAnswer(_valueRetrieved);
+        }
+        else if (currRequest.qtype == 1) {     // price aggregator
           if (currRequest.contractAddr != address(0x0)) {
             IPriceFeed _feed = IPriceFeed(currRequest.contractAddr);
             _feed.addRequestAnswer(_priceRetrieved);
