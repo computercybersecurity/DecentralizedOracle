@@ -54,10 +54,10 @@ module.exports = async function (deployer, network) {
     await deployer.deploy(Upgradable, dataParse['Oracle']);
     dataParse['Upgradable'] = Upgradable.address;
 
-    await deployer.deploy(PriceFeed, "ETHUSDT");
+    await deployer.deploy(PriceFeed, dataParse['Upgradable'], "ETHUSDT");
     dataParse['ETHUSDT'] = PriceFeed.address;
 
-    await deployer.deploy(DataQuery, "ETHUSDT");
+    await deployer.deploy(DataQuery, dataParse['Upgradable'], "ETHUSDT");
     dataParse['DataQuery'] = DataQuery.address;
 
     const updatedData = JSON.stringify(dataParse);

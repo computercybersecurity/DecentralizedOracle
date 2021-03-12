@@ -2,6 +2,7 @@
 pragma solidity >=0.6.6;
 
 import "./interfaces/IPriceFeed.sol";
+import "./interfaces/IUpgradable.sol";
 import "./library/Ownable.sol";
 
 contract PriceFeed is Ownable, IPriceFeed {
@@ -9,8 +10,14 @@ contract PriceFeed is Ownable, IPriceFeed {
   string public feedName;
   mapping(uint256 => requestAnswer) public answers;
   uint256 currentId;
+  IUpgradable private upgradable;
 
-  constructor (string memory _feedName) public {
+  constructor (IUpgradable _upgradable, string memory _feedName) public {
+    feedName = _feedName;
+    upgradable = _upgradable;
+  }
+
+  function updateFeedName (string memory _feedName) public {
     feedName = _feedName;
   }
   
@@ -40,6 +47,7 @@ contract PriceFeed is Ownable, IPriceFeed {
 
   function addRequestAnswer(int256 _priceAnswer) public override(IPriceFeed)
   {
+    require(msg.sender == upgradable.getOracleAddress(), "Sender is not oracle.");
     answers[currentId] = requestAnswer(
       currentId, block.timestamp, _priceAnswer
     );

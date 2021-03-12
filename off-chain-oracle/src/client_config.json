@@ -1,6 +1,6 @@
 {
     "type": "price",
-    "contractAddr": "0xD1bcE35d33E6ef1ce35969edc516C904d779fE2d",
+    "contractAddr": "0x19318B35D4aEE770fA1f8b4bb5d1b886908E26ED",
     "queries": [
         {
             "url": "https://api.binance.com/api/v3/ticker/price",

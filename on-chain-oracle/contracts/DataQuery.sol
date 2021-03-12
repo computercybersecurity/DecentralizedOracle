@@ -2,6 +2,7 @@
 pragma solidity >=0.6.6;
 
 import "./interfaces/IDataQuery.sol";
+import "./interfaces/IUpgradable.sol";
 import "./library/Ownable.sol";
 
 contract DataQuery is Ownable, IDataQuery {
@@ -9,11 +10,17 @@ contract DataQuery is Ownable, IDataQuery {
   string public feedName;
   mapping(uint256 => requestAnswer) public answers;
   uint256 currentId;
+  IUpgradable private upgradable;
 
-  constructor (string memory _feedName) public {
+  constructor (IUpgradable _upgradable, string memory _feedName) public {
     feedName = _feedName;
+    upgradable = _upgradable;
   }
   
+  function updateFeedName (string memory _feedName) public {
+    feedName = _feedName;
+  }
+
   function getLatestAnswer () public override(IDataQuery) returns (string memory)
   {
     require(currentId > 0, "Contract is empty.");
@@ -40,6 +47,7 @@ contract DataQuery is Ownable, IDataQuery {
 
   function addRequestAnswer(string memory _answer) public override(IDataQuery)
   {
+    require(msg.sender == upgradable.getOracleAddress(), "Sender is not oracle.");
     answers[currentId] = requestAnswer(
       currentId, block.timestamp, _answer
     );
