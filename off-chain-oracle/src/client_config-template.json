@@ -1,0 +1,21 @@
+{
+    "type": "price",
+    "contractAddr": "0x19318B35D4aEE770fA1f8b4bb5d1b886908E26ED",
+    "queries": [
+        {
+            "url": "https://api.binance.com/api/v3/ticker/price",
+            "method": "GET",
+            "attributes": [
+                {
+                    "type": "array",
+                    "searchBy": "symbol",
+                    "value": "ETHUSDT"
+                },
+                {
+                    "type": "object",
+                    "object": "price"
+                }
+            ]
+        }
+    ]
+}

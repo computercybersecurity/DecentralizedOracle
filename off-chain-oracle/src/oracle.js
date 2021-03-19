@@ -19,11 +19,12 @@ const start = async () => {
       const query = queriesJSON[idx];
 
       const rawResponse = await fetch(query.url, {
-        method: 'GET',
+        method: query.method,
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json'
-        }
+        },
+        body: query.body
       })
 
       let valueRetrieved = await rawResponse.json();

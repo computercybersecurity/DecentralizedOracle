@@ -3,16 +3,21 @@
     "contractAddr": "0x19318B35D4aEE770fA1f8b4bb5d1b886908E26ED",
     "queries": [
         {
-            "url": "https://api.binance.com/api/v3/ticker/price",
+            "url": "https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v2",
+            "method": "POST",
+            "body": "{\"query\":\"{\n pair(id: \"0xcfdcd696dde5df39f569807c6934e6ba97cebb8a\"){\n token1Price\n }\n}\"}",
             "attributes": [
                 {
-                    "type": "array",
-                    "searchBy": "symbol",
-                    "value": "ETHUSDT"
+                    "type": "object",
+                    "object": "data"
                 },
                 {
                     "type": "object",
-                    "object": "price"
+                    "object": "pair"
+                },
+                {
+                    "type": "object",
+                    "object": "token1Price"
                 }
             ]
         }
