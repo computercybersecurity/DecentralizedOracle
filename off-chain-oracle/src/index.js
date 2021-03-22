@@ -1,6 +1,6 @@
 import startOracle from "./oracle.js";
 import startConsumer from "./consumer.js";
-import startClient from "./client.js";
+// import startClient from "./client.js";
 
 startOracle();
 
