@@ -10,6 +10,7 @@
     "start": "node lib",
     "lint": "eslint src"
   },
+  "type": "module",
   "repository": "https://github.com/computercybersecurity/DecentralizedOracle",
   "author": "Peter Park <peter.park13ak@gmail.com>",
   "license": "MIT",
