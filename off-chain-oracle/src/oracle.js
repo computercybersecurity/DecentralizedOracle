@@ -5,7 +5,7 @@ import {
   updateRequest,
   newRequest,
   newOracle
-} from "./ethereum";
+} from "./ethereum.js";
 
 const start = async () => {
   await newOracle();

@@ -2,7 +2,7 @@ require("dotenv").config();
 
 import {
   createRequest
-} from "./ethereum";
+} from "./ethereum.js";
 import client_config from './client_config.json';
 
 const start = () => {

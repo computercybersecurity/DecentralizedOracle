@@ -1,7 +1,7 @@
 import {
   updatedRequest,
   newRequest
-} from "./ethereum";
+} from "./ethereum.js";
 
 const consume = () => {
   updatedRequest((error, event) => {
