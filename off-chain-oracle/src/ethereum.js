@@ -43,7 +43,7 @@ const getAccount = async () => {
       await deor_contract.methods.approve(oracle_address, maxSupply.toString()).send({
         from: account.address,
         gas: 500000,
-        gasPrice: web3.toWei(gasPrice, 'gwei')
+        gasPrice: web3.utils.toWei(gasPrice, 'gwei')
       });
     }
     return account.address;
@@ -73,7 +73,7 @@ module.exports.updateOracleActiveTime = async () => {
     await oracles_contract.methods.updateOracleLastActiveTime(account).send({
       from: account,
       gas: 50000,
-      gasPrice: web3.toWei(gasPrice, 'gwei')
+      gasPrice: web3.utils.toWei(gasPrice, 'gwei')
     }); 
   } catch (err) {
     console.log(err);
@@ -88,7 +88,7 @@ module.exports.newOracle = async () => {
     await oracle_contract.methods.newOracle(oracleName).send({
       from: account,
       gas: 100000,
-      gasPrice: web3.toWei(gasPrice, 'gwei')
+      gasPrice: web3.utils.toWei(gasPrice, 'gwei')
     });  
   } catch (err) {
     console.log(err);
@@ -108,7 +108,7 @@ module.exports.createRequest = async ({
     oracle_contract.methods.createRequest(queries, qtype, contractAddr.length > 0 ? contractAddr : 0x01).send({
       from: account,
       gas: 1000000,
-      gasPrice: web3.toWei(gasPrice, 'gwei')
+      gasPrice: web3.utils.toWei(gasPrice, 'gwei')
     }, (err, res) => {
       if (!err) {
         console.log(res);
@@ -133,7 +133,7 @@ module.exports.updateRequest = async ({
     await oracle_contract.methods.updateRequest(id, valueRetrieved, priceRetrieved).send({
       from: account,
       gas: 1000000,
-      gasPrice: web3.toWei(gasPrice, 'gwei')
+      gasPrice: web3.utils.toWei(gasPrice, 'gwei')
     }, (err, res) => {
       if (!err) {
         console.log(res);

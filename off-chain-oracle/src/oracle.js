@@ -15,7 +15,7 @@ const start = async () => {
   console.log("===== Is Available =====");
   console.log(isAvailable);
 
-  if (isAvailable) {
+  if (!isAvailable) {
     await updateOracleActiveTime();
   }
   else {
