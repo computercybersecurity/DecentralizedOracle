@@ -4,11 +4,23 @@ const fetch = require("node-fetch");
 import {
   updateRequest,
   newRequest,
-  newOracle
+  newOracle,
+  isOracleAvailable,
+  updateOracleActiveTime
 } from "./ethereum.js";
 
 const start = async () => {
-  await newOracle();
+  let isAvailable = await isOracleAvailable();
+
+  console.log("===== Is Available =====");
+  console.log(isAvailable);
+
+  if (isAvailable) {
+    await updateOracleActiveTime();
+  }
+  else {
+    await newOracle();
+  }
 
   newRequest(async (error, event) => {
     console.log(event.returnValues);

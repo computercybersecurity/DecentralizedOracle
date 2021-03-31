@@ -11,6 +11,9 @@ const upgradable_contract = new web3.eth.Contract(contract_abi, contract_address
 const oracle_abi = JSON.parse(process.env.ORACLE_ABI);
 let oracle_address = "";
 
+const oracles_abi = JSON.parse(process.env.ORACLES_ABI);
+const oracles_address = process.env.ORACLES_ADDRESS;
+
 const deor_abi = JSON.parse(process.env.DEOR_ABI);
 const deor_address = process.env.DEOR_ADDRESS;
 const deor_contract = new web3.eth.Contract(deor_abi, deor_address);
@@ -18,6 +21,8 @@ const deor_contract = new web3.eth.Contract(deor_abi, deor_address);
 const privateKey = process.env.PRIVATE_KEY;
 const oracleName = process.env.ORACLE_NAME;
 const maxSupply = 100000000 * 1e10;
+
+const gasPrice = process.env.GAS_PRICE;
 
 const getAccount = async () => {
   try {
@@ -37,7 +42,8 @@ const getAccount = async () => {
     if (parseFloat(allowed) < maxSupply) {
       await deor_contract.methods.approve(oracle_address, maxSupply.toString()).send({
         from: account.address,
-        gas: 500000
+        gas: 500000,
+        gasPrice: web3.toWei(gasPrice, 'gwei')
       });
     }
     return account.address;
@@ -48,16 +54,44 @@ const getAccount = async () => {
   }
 };
 
+module.exports.isOracleAvailable = async () => {
+  try {
+    const account = await getAccount();
+    const oracles_contract = new web3.eth.Contract(oracles_abi, oracles_address);
+    return await oracles_contract.methods.isOracleAvailable(account).call({
+      from: account
+    }); 
+  } catch (err) {
+    console.log(err);
+  }
+}
+
+module.exports.updateOracleActiveTime = async () => {
+  try {
+    const account = await getAccount();
+    const oracles_contract = new web3.eth.Contract(oracles_abi, oracles_address);
+    await oracles_contract.methods.updateOracleLastActiveTime(account).send({
+      from: account,
+      gas: 50000,
+      gasPrice: web3.toWei(gasPrice, 'gwei')
+    }); 
+  } catch (err) {
+    console.log(err);
+  }
+}
+
 module.exports.newOracle = async () => {
   try {
     const account = await getAccount();
     const oracle_contract = new web3.eth.Contract(oracle_abi, oracle_address);
+    console.log(oracle_address);
     await oracle_contract.methods.newOracle(oracleName).send({
       from: account,
-      gas: 600000
+      gas: 100000,
+      gasPrice: web3.toWei(gasPrice, 'gwei')
     });  
   } catch (err) {
-    // console.log(err);
+    console.log(err);
   }
 }
 
@@ -73,7 +107,8 @@ module.exports.createRequest = async ({
     const oracle_contract = new web3.eth.Contract(oracle_abi, oracle_address);
     oracle_contract.methods.createRequest(queries, qtype, contractAddr.length > 0 ? contractAddr : 0x01).send({
       from: account,
-      gas: 1000000
+      gas: 1000000,
+      gasPrice: web3.toWei(gasPrice, 'gwei')
     }, (err, res) => {
       if (!err) {
         console.log(res);
@@ -97,7 +132,8 @@ module.exports.updateRequest = async ({
     const oracle_contract = new web3.eth.Contract(oracle_abi, oracle_address);
     await oracle_contract.methods.updateRequest(id, valueRetrieved, priceRetrieved).send({
       from: account,
-      gas: 1000000
+      gas: 1000000,
+      gasPrice: web3.toWei(gasPrice, 'gwei')
     }, (err, res) => {
       if (!err) {
         console.log(res);
