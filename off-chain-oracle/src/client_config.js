@@ -1,4 +1,4 @@
-{
+export default {
     "type": "price",
     "contractAddr": "0x198C317Ff58882456fFB40dD41A07AdEDA2346bb",
     "queries": [
