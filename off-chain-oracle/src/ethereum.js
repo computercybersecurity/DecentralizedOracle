@@ -72,7 +72,7 @@ module.exports.updateOracleActiveTime = async () => {
     const oracles_contract = new web3.eth.Contract(oracles_abi, oracles_address);
     await oracles_contract.methods.updateOracleLastActiveTime(account).send({
       from: account,
-      gas: 50000,
+      gas: 500000,
       gasPrice: web3.utils.toWei(gasPrice, 'gwei')
     }); 
   } catch (err) {
@@ -87,7 +87,7 @@ module.exports.newOracle = async () => {
     console.log(oracle_address);
     await oracle_contract.methods.newOracle(oracleName).send({
       from: account,
-      gas: 100000,
+      gas: 500000,
       gasPrice: web3.utils.toWei(gasPrice, 'gwei')
     });  
   } catch (err) {
