@@ -4,10 +4,43 @@ const fetch = require("node-fetch");
 import {
   updateRequest,
   newRequest,
-  newOracle,
   isOracleAvailable,
   updateOracleActiveTime
 } from "./ethereum.js";
+
+const getFetchParameters = (query) => {
+  let url = "";
+  let method = "GET";
+  let body = "";
+  let attributes = [];
+
+  if (query.type === 'uniswap-v2') {
+    url = "https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v2";
+    method = "POST";
+    body = `{\"query\":\"{\n pair(id: \"${query.pair}\"){\n token1Price\n }\n}\"}`;
+    attributes = [
+      {
+          "type": "object",
+          "object": "data"
+      },
+      {
+          "type": "object",
+          "object": "pair"
+      },
+      {
+          "type": "object",
+          "object": "token1Price"
+      }
+    ];
+  }
+
+  return {
+    url,
+    method,
+    body,
+    attributes
+  }
+}
 
 const start = async () => {
   let isAvailable = await isOracleAvailable();
@@ -15,20 +48,17 @@ const start = async () => {
   console.log("===== Is Available =====");
   console.log(isAvailable);
 
-  if (!isAvailable) {
+  if (isAvailable) {
     await updateOracleActiveTime();
-  }
-  else {
-    await newOracle();
   }
 
   newRequest(async (error, event) => {
     console.log(event.returnValues);
     try {
-      const { id, queries, qtype } = event.returnValues;
+      const { id, queries } = event.returnValues;
       const queriesJSON = JSON.parse(queries);
       const idx = Math.floor(Math.random() * queriesJSON.length);
-      const query = queriesJSON[idx];
+      const query = getFetchParameters(queriesJSON[idx]);
 
       const rawResponse = await fetch(query.url, {
         method: query.method,
@@ -65,8 +95,7 @@ const start = async () => {
 
       updateRequest({
         id, 
-        valueRetrieved: parseInt(qtype) === 0 ? valueRetrieved.toString() : "",
-        priceRetrieved: parseInt(qtype) === 1 ? `0x${Math.floor(parseFloat(valueRetrieved) * 1e18).toString(16)}` : 0
+        priceRetrieved: `0x${Math.floor(parseFloat(valueRetrieved) * 1e18).toString(16)}`
       });
     }
     catch(error) {

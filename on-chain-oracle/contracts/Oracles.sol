@@ -6,23 +6,24 @@ import "./library/Ownable.sol";
 
 contract Oracles is Ownable, IOracles {
 
-  uint private totalOracleCount = 2000; // Hardcoded oracle count
+  uint private totalOracleCount = 11; // Hardcoded oracle count
   mapping(address => reputation) public oracles;        // Reputation of oracles
   address[] public oracleAddresses;      // Saved active oracle addresses
 
   constructor () public {
   }
 
-  function newOracle (string memory name, address addr, uint256 requestFee) public override(IOracles)
+  function newOracle (bytes32 name, address addr) public onlyOwner
   {
-    require(oracleAddresses.length < totalOracleCount, "oracle overflow");
+    require(oracleAddresses.length < totalOracleCount && addr != address(0x0), "oracle overflow");
     require(oracles[addr].addr == address(0), "already exists");
 
     oracles[addr].name = name;
     oracles[addr].addr = addr;
     oracles[addr].lastActiveTime = now;
-    oracles[addr].penalty = requestFee;
     oracleAddresses.push(addr);
+
+    emit NewOracle(addr);
   }
 
   function getOracleCount () public override(IOracles) returns (uint256)
@@ -32,7 +33,7 @@ contract Oracles is Ownable, IOracles {
 
   function isOracleAvailable (address addr) public override(IOracles) returns (bool)
   {
-    return oracles[addr].addr == address(0);
+    return oracles[addr].addr == addr;
   }
 
   function getOracleByIndex (uint256 idx) public override(IOracles) returns (address)
@@ -40,10 +41,9 @@ contract Oracles is Ownable, IOracles {
     return oracleAddresses[idx];
   }
 
-  function increaseOracleAssigned (address addr, uint256 penalty) public override(IOracles)
+  function increaseOracleAssigned (address addr) public override(IOracles)
   {
     oracles[addr].totalAssignedRequest ++;
-    oracles[addr].penalty = penalty;
   }
 
   function increaseOracleCompleted (address addr, uint256 responseTime) public override(IOracles)
@@ -68,9 +68,9 @@ contract Oracles is Ownable, IOracles {
     oracles[addr].lastActiveTime = now;
   }
 
-  function getOracleReputation (address addr) public view returns (string memory, uint256, uint256, uint256, uint256, uint256, uint256, uint256) {
+  function getOracleReputation (address addr) public view returns (bytes32, uint256, uint256, uint256, uint256, uint256, uint256) {
     reputation memory p = oracles[addr];
-    return (p.name, p.totalAssignedRequest, p.totalCompletedRequest, p.totalAcceptedRequest, p.totalResponseTime, p.lastActiveTime, p.penalty, p.totalEarned);
+    return (p.name, p.totalAssignedRequest, p.totalCompletedRequest, p.totalAcceptedRequest, p.totalResponseTime, p.lastActiveTime, p.totalEarned);
   }
 
   function removeOracleByAddress (address addr) public onlyOwner
@@ -82,6 +82,13 @@ contract Oracles is Ownable, IOracles {
         oracleAddresses.pop();
 
         oracles[addr].addr = address(0);      // Reset reputation of oracle to zero
+        oracles[addr].name = "";
+        oracles[addr].addr = address(0x0);
+        oracles[addr].lastActiveTime = 0;
+        oracles[addr].totalAssignedRequest = 0;
+        oracles[addr].totalAcceptedRequest = 0;
+        oracles[addr].totalCompletedRequest = 0;
+        oracles[addr].totalResponseTime = 0;
         break;
       }
     }

@@ -19,7 +19,6 @@ const deor_address = process.env.DEOR_ADDRESS;
 const deor_contract = new web3.eth.Contract(deor_abi, deor_address);
 
 const privateKey = process.env.PRIVATE_KEY;
-const oracleName = process.env.ORACLE_NAME;
 const maxSupply = 100000000 * 1e10;
 
 const gasPrice = process.env.GAS_PRICE;
@@ -80,34 +79,18 @@ module.exports.updateOracleActiveTime = async () => {
   }
 }
 
-module.exports.newOracle = async () => {
-  try {
-    const account = await getAccount();
-    const oracle_contract = new web3.eth.Contract(oracle_abi, oracle_address);
-    console.log(oracle_address);
-    await oracle_contract.methods.newOracle(oracleName).send({
-      from: account,
-      gas: 500000,
-      gasPrice: web3.utils.toWei(gasPrice, 'gwei')
-    });  
-  } catch (err) {
-    console.log(err);
-  }
-}
-
 module.exports.createRequest = async ({
   queries,
-  qtype,
   contractAddr
 }) => {
   try {
     console.log('===== createRequest =====');
-    console.log(queries, qtype, contractAddr)
+    console.log(queries, contractAddr)
     const account = await getAccount();
     const oracle_contract = new web3.eth.Contract(oracle_abi, oracle_address);
-    oracle_contract.methods.createRequest(queries, qtype, contractAddr.length > 0 ? contractAddr : 0x01).send({
+    oracle_contract.methods.createRequest(queries, contractAddr.length > 0 ? contractAddr : 0x01).send({
       from: account,
-      gas: 1000000,
+      gas: 3000000,
       gasPrice: web3.utils.toWei(gasPrice, 'gwei')
     }, (err, res) => {
       if (!err) {
@@ -123,16 +106,15 @@ module.exports.createRequest = async ({
 
 module.exports.updateRequest = async ({
   id,
-  valueRetrieved,
   priceRetrieved
 }) => {
   try {
     console.log('===== updateRequest =====');
     const account = await getAccount();
     const oracle_contract = new web3.eth.Contract(oracle_abi, oracle_address);
-    await oracle_contract.methods.updateRequest(id, valueRetrieved, priceRetrieved).send({
+    await oracle_contract.methods.updateRequest(id, priceRetrieved).send({
       from: account,
-      gas: 1000000,
+      gas: 3000000,
       gasPrice: web3.utils.toWei(gasPrice, 'gwei')
     }, (err, res) => {
       if (!err) {

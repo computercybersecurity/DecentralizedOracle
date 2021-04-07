@@ -11,7 +11,6 @@ const start = () => {
 
   createRequest({
     queries,
-    qtype: client_config["type"] === 'query' ? 0 : 1,
     contractAddr: client_config["contractAddr"]
   })
   .then(restart)

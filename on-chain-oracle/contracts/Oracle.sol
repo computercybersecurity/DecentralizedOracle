@@ -18,59 +18,46 @@ contract Oracle is Ownable, OracleInterface, Selection {
 
   Request[] private requests; //  list of requests made to the contract
   uint256 public currentId = 1; // increasing request id
-  uint private totalOracleCount = 2000; // Hardcoded oracle count
   uint256 constant private EXPIRY_TIME = 3 minutes;
   uint256 public requestFee = 100 * (10**10);   // request fee
-  uint private maxSelectOracleCount = 17;
 
   constructor (address tokenAddress, address oracleAddress) public {
     token = IDEOR(tokenAddress);
     oracles = IOracles(oracleAddress);
-    requests.push(Request(0, "", 0, address(0x0), "", 0, 0, 0, 0, 0));
+    requests.push(Request(0, 0, 0, 0, 0, 0, false, address(0x0), "", ""));
   }
 
   function setRequestFee (uint256 fee) public onlyOwner {
     requestFee = fee;
   }
 
-  function newOracle (string memory name) public override(OracleInterface)
-  {
-    oracles.newOracle(name, msg.sender, requestFee);
-    emit NewOracle(msg.sender);
-  }
-
   function createRequest (
     string memory queries,
-    uint8 qtype,
+    uint256 qtype,
     address contractAddr
   )
   public override(OracleInterface)
   {
-    require(token.balanceOf(msg.sender) >= requestFee, "Invalid fee.");
-    require(token.transferFrom(msg.sender, owner, requestFee), "DEOR transfer Failed.");
+    token.transferFrom(msg.sender, address(this), requestFee);
 
-    uint i = 0;
-    uint len = oracles.getOracleCount();
-    uint selectedOracleCount = (len * 2 + 2) / 3;
-    if (selectedOracleCount > maxSelectOracleCount) {
-      selectedOracleCount = maxSelectOracleCount;
-    }
+    uint256 len = oracles.getOracleCount();
+    uint256 selectedOracleCount = len > 11 ? 11 : len;
 
-    requests.push(Request(currentId, queries, qtype, contractAddr, "", 0, block.timestamp, 0, requestFee, selectedOracleCount));
-    uint256 length = requests.length;
-    Request storage r = requests[length-1];
+    requests.push(Request(currentId, qtype, block.timestamp, 0, selectedOracleCount, 0, false, contractAddr, "", queries));
+    Request storage r = requests[requests.length - 1];
 
     uint256[] memory orderingOracles = getSelectedOracles(len);
     uint256 penaltyForRequest = requestFee.div(selectedOracleCount);
-    uint count = 0;
+    uint256 count = 0;
 
-    for (i = 0; i < len && count < selectedOracleCount ; i ++) {
+    for (uint256 i = 0; i < len && count < selectedOracleCount ; i ++) {
       address selOracle = oracles.getOracleByIndex(orderingOracles[i]);
       //Validate oracle's acitivity
-      if (token.transferFrom(selOracle, owner, penaltyForRequest) && now < oracles.getOracleLastActiveTime(selOracle) + 1 days) {
+      if (now < oracles.getOracleLastActiveTime(selOracle) + 1 days && token.balanceOf(selOracle) >= penaltyForRequest) {
+        token.transferFrom(selOracle, address(this), penaltyForRequest);
         r.quorum[selOracle] = 1;
         count ++;
-        oracles.increaseOracleAssigned(selOracle, penaltyForRequest);
+        oracles.increaseOracleAssigned(selOracle);
       }
     }
     r.minQuorum = (count * 2 + 2) / 3;          //minimum number of responses to receive before declaring final result(2/3 of total)
@@ -79,7 +66,8 @@ contract Oracle is Ownable, OracleInterface, Selection {
     emit NewRequest (
       currentId,
       queries,
-      qtype
+      qtype,
+      contractAddr
     );
 
     // increase request id
@@ -144,9 +132,9 @@ contract Oracle is Ownable, OracleInterface, Selection {
         currRequest.priceAnswers[msg.sender] = _priceRetrieved;
       }
 
-      uint i = 0;
+      uint256 i = 0;
       uint256 currentQuorum = 0;
-      uint len = oracles.getOracleCount();
+      uint256 len = oracles.getOracleCount();
       uint8[] memory flag = new uint8[](len);
 
       //iterate through oracle list and check if enough oracles(minimum quorum)
@@ -161,38 +149,39 @@ contract Oracle is Ownable, OracleInterface, Selection {
       //request Resolved
       if(currentQuorum >= currRequest.minQuorum) {
 
-        uint256 penaltyForRequest = currRequest.fee.div(currRequest.selectedOracleCount);
+        uint256 penaltyForRequest = requestFee.div(currRequest.selectedOracleCount);
 
         for (i = 0 ; i < len ; i ++) {
 
           if (flag[i] == 1) {
-            uint256 awardForRequest = currRequest.fee.div(currentQuorum);
+            uint256 awardForRequest = requestFee.div(currentQuorum);
             address addr = oracles.getOracleByIndex(i);
             oracles.increaseOracleAccepted(addr, awardForRequest);
-            token.transferFrom(owner, addr, awardForRequest + penaltyForRequest);
+            token.transfer(addr, awardForRequest + penaltyForRequest);
           }
         }
 
         currRequest.agreedValue = _valueRetrieved;
+        currRequest.agreedPrice = _priceRetrieved;
 
         if (currRequest.qtype == 0) {     // data aggregator
           IDataQuery _feed = IDataQuery(currRequest.contractAddr);
           _feed.addRequestAnswer(_valueRetrieved);
+          emit UpdatedDataQuery (
+            currRequest.id,
+            _valueRetrieved,
+            currRequest.contractAddr
+          );
         }
         else if (currRequest.qtype == 1) {     // price aggregator
-          if (currRequest.contractAddr != address(0x0)) {
-            IPriceFeed _feed = IPriceFeed(currRequest.contractAddr);
-            _feed.addRequestAnswer(_priceRetrieved);
-          }
+          IPriceFeed _feed = IPriceFeed(currRequest.contractAddr);
+          _feed.addRequestAnswer(_priceRetrieved);
+          emit UpdatedPrice (
+            currRequest.id,
+            _priceRetrieved,
+            currRequest.contractAddr
+          );
         }
-
-        emit UpdatedRequest (
-          currRequest.id,
-          currRequest.queries,
-          currRequest.qtype,
-          _valueRetrieved,
-          _priceRetrieved
-        );
       }
     }
   }

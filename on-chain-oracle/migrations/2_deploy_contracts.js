@@ -3,7 +3,7 @@ var Ownable = artifacts.require("../contracts/library/Ownable.sol");
 var Randomizer = artifacts.require("../contracts/library/Randomizer.sol");
 var Selection = artifacts.require("../contracts/library/Selection.sol");
 var SafeMathDEOR = artifacts.require("../contracts/library/SafeMathDEOR.sol");
-var Oracle = artifacts.require("../contracts/Oracle.sol");
+var PriceOracle = artifacts.require("../contracts/PriceOracle.sol");
 var Oracles = artifacts.require("../contracts/Oracles.sol");
 var DEOR = artifacts.require("../contracts/DEOR.sol");
 var Upgradable = artifacts.require("../contracts/Upgradable.sol");
@@ -60,12 +60,12 @@ module.exports = async function (deployer, network) {
       dataParse['Oracles'] = configs.Oracles;
     }
 
-    await deployer.deploy(Oracle, dataParse['DEOR'], dataParse['Oracles'], {
+    await deployer.deploy(PriceOracle, dataParse['DEOR'], dataParse['Oracles'], {
       gas: 5000000
     });  
-    dataParse['Oracle'] = Oracle.address;
+    dataParse['PriceOracle'] = PriceOracle.address;
 
-    await deployer.deploy(Upgradable, dataParse['Oracle'], {
+    await deployer.deploy(Upgradable, dataParse['PriceOracle'], {
       gas: 1000000
     });
     dataParse['Upgradable'] = Upgradable.address;
