@@ -9,9 +9,9 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "kovan": "truffle migrate --network kovan --reset",
-    "kovanverify": "truffle run verify Oracle --network kovan",
+    "kovanverify": "truffle run verify PriceOracle Oracles Upgradable --network kovan",
     "mainnet": "truffle migrate --network main --reset",
-    "verify": "truffle run verify Oracle --network main"
+    "verify": "truffle run verify PriceOracle Oracles Upgradable --network main"
   },
   "repository": "https://github.com/computercybersecurity/DecentralizedOracle",
   "author": "Peter Park <peter.park13ak@gmail.com>",

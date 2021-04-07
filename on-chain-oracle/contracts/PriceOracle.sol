@@ -150,6 +150,9 @@ contract PriceOracle is Ownable, IPriceOracle, Selection {
           currRequest.agreedPrice = _priceRetrieved;
           currRequest.isFinished = true;
 
+          IPriceFeed _feed = IPriceFeed(currRequest.contractAddr);
+          _feed.addRequestAnswer(_priceRetrieved);
+
           emit UpdatedPrice (
             currRequest.id,
             _priceRetrieved,

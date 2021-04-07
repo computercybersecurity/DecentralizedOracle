@@ -135,5 +135,5 @@ module.exports.newRequest = (callback) => {
 
 module.exports.updatedRequest = (callback) => {
   const oracle_contract = new web3.eth.Contract(oracle_abi, oracle_address);
-  oracle_contract.events.UpdatedRequest({}, callback);
+  oracle_contract.events.UpdatedPrice({}, callback);
 };

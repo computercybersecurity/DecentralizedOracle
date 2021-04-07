@@ -19,7 +19,7 @@ module.exports = async function (deployer, network) {
     await deployer.deploy(Ownable, {
       gas: 1000000
     });
-    await deployer.link(Ownable, [Oracle, DEOR]);
+    await deployer.link(Ownable, [PriceOracle, DEOR]);
     dataParse['Ownable'] = Ownable.address;  
 
     await deployer.deploy(Randomizer, {
@@ -31,13 +31,13 @@ module.exports = async function (deployer, network) {
     await deployer.deploy(Selection, {
       gas: 3000000
     });
-    await deployer.link(Selection, Oracle);
+    await deployer.link(Selection, PriceOracle);
     dataParse['Selection'] = Selection.address;  
 
     await deployer.deploy(SafeMathDEOR, {
       gas: 1000000
     });
-    await deployer.link(SafeMathDEOR, [DEOR, Oracle]);
+    await deployer.link(SafeMathDEOR, [DEOR, PriceOracle]);
     dataParse['SafeMathDEOR'] = SafeMathDEOR.address;  
 
     if (!configs.DEOR) {
@@ -60,15 +60,25 @@ module.exports = async function (deployer, network) {
       dataParse['Oracles'] = configs.Oracles;
     }
 
-    await deployer.deploy(PriceOracle, dataParse['DEOR'], dataParse['Oracles'], {
-      gas: 5000000
-    });  
-    dataParse['PriceOracle'] = PriceOracle.address;
+    if (!configs.PriceOracle) {
+      await deployer.deploy(PriceOracle, dataParse['DEOR'], dataParse['Oracles'], {
+        gas: 5000000
+      });  
+      dataParse['PriceOracle'] = PriceOracle.address;
+    }
+    else {
+      dataParse['PriceOracle'] = configs.PriceOracle;
+    }
 
-    await deployer.deploy(Upgradable, dataParse['PriceOracle'], {
-      gas: 1000000
-    });
-    dataParse['Upgradable'] = Upgradable.address;
+    if (!configs.Upgradable) {
+      await deployer.deploy(Upgradable, dataParse['PriceOracle'], {
+        gas: 1000000
+      });
+      dataParse['Upgradable'] = Upgradable.address;
+    }
+    else {
+      dataParse['Upgradable'] = configs.Upgradable;
+    }
 
     // await deployer.deploy(PriceFeed, dataParse['Upgradable'], "ETHUSDT", {
     //   gas: 1000000

@@ -19,8 +19,8 @@ module.exports = {
         )
       },
       network_id: 1,
-      gas: 12450000,
-      gasPrice: 20000000000,
+      gas: process.env.GAS,
+      gasPrice: process.env.GAS_PRICE,
       confirmations: 2,
       websockets: true
     },

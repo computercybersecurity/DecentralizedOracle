@@ -11,7 +11,7 @@ import {
 const getFetchParameters = (query) => {
   let url = "";
   let method = "GET";
-  let body = "";
+  let body = undefined;
   let attributes = [];
 
   if (query.type === 'uniswap-v2') {
@@ -30,6 +30,21 @@ const getFetchParameters = (query) => {
       {
           "type": "object",
           "object": "token1Price"
+      }
+    ];
+  }
+  else if (query.type === 'binance') {
+    url = "https://api.binance.com/api/v3/ticker/price";
+    method = "GET";
+    attributes=[
+      {
+          "type": "array",
+          "searchBy": "symbol",
+          "value": query.symbol
+      },
+      {
+          "type": "object",
+          "object": "price"
       }
     ];
   }

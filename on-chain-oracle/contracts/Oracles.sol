@@ -6,7 +6,7 @@ import "./library/Ownable.sol";
 
 contract Oracles is Ownable, IOracles {
 
-  uint private totalOracleCount = 11; // Hardcoded oracle count
+  uint private totalOracleCount = 21; // Hardcoded oracle count
   mapping(address => reputation) public oracles;        // Reputation of oracles
   address[] public oracleAddresses;      // Saved active oracle addresses
 

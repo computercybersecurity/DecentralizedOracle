@@ -1,10 +1,10 @@
 export default {
     "type": "price",
-    "contractAddr": "0x198C317Ff58882456fFB40dD41A07AdEDA2346bb",
+    "contractAddr": "0x8355dD945fb73B2844edecDEb694773b944dce27",
     "queries": [
         {
-            "type": "uniswap-v2",
-            "pair": "0x856e90282961c0e7f6693fd2f62b35d5df9783cf",
+            "type": "binance",
+            "symbol": "ETHUSDT"
         }
     ]
 }
